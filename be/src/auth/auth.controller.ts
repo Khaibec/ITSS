@@ -29,10 +29,9 @@ export class AuthController {
     return this.authService.logout();
   }
 
-
-    @UseGuards(JwtAuthGuard)
-    @Get('profile')
-    getProfile(@Req() req: authenticatedRequestInterface.AuthenticatedRequest) {
-      return req.user;
-    }
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  getProfile(@Req() req: authenticatedRequestInterface.AuthenticatedRequest) {
+    return req.user;
   }
+}
