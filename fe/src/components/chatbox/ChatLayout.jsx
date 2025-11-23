@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ChatHeader from "./ChatHeader";
 import GroupList from "./GroupList";
 import ChatArea from "./ChatArea";
 import { chatBoxesAPI, getToken } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
 import { getUserFromToken } from "../../utils/jwt";
+import socketService from "../../api/socket";
 
 const ChatLayout = () => {
   const { logout } = useAuth();
@@ -14,6 +15,72 @@ const ChatLayout = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const currentRoomRef = useRef(null); // Track current room
+  const messageUnsubscribeRef = useRef(null); // Track message listener
+
+  // Initialize Socket connection
+  useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      console.log("[ChatLayout] No token, skipping socket connection");
+      return;
+    }
+
+    // Connect to socket
+    socketService.connect(
+      () => {
+        console.log("[ChatLayout] Socket connected");
+      },
+      (reason) => {
+        console.log("[ChatLayout] Socket disconnected:", reason);
+      },
+      (error) => {
+        console.error("[ChatLayout] Socket error:", error);
+        if (error.message?.includes("Authentication")) {
+          logout();
+        }
+      }
+    );
+
+    // Listen for incoming messages
+    messageUnsubscribeRef.current = socketService.onMessage((message) => {
+      console.log("[ChatLayout] New message received:", message);
+
+      // Update messages state
+      setMessages((prev) => {
+        // Use group_id if exists, otherwise use null for general chat
+        const groupId = message.group_id ?? null;
+        const key = groupId || "general";
+        const existingMessages = prev[key] || [];
+
+        // Check if message already exists (avoid duplicates)
+        const exists = existingMessages.some(
+          (msg) => msg.message_id === message.message_id
+        );
+
+        if (exists) {
+          return prev;
+        }
+
+        return {
+          ...prev,
+          [key]: [...existingMessages, message],
+        };
+      });
+    });
+
+    // Cleanup on unmount
+    return () => {
+      console.log("[ChatLayout] Cleaning up socket connection");
+      if (messageUnsubscribeRef.current) {
+        messageUnsubscribeRef.current();
+      }
+      if (currentRoomRef.current) {
+        socketService.leaveRoom(currentRoomRef.current);
+      }
+      socketService.disconnect();
+    };
+  }, [logout]);
 
   // Fetch chat boxes on mount
   useEffect(() => {
@@ -22,7 +89,7 @@ const ChatLayout = () => {
         setLoading(true);
         setError(null);
         const response = await chatBoxesAPI.getChatBoxes();
-        
+
         if (response.success && response.data) {
           setChatBoxes(response.data);
           // Auto-select first group if available
@@ -30,13 +97,16 @@ const ChatLayout = () => {
             setSelectedGroupId(response.data[0].group_id);
           }
         } else {
-          setError('Failed to load chat boxes');
+          setError("Failed to load chat boxes");
         }
       } catch (err) {
-        console.error('Error fetching chat boxes:', err);
-        setError(err.message || 'Failed to load chat boxes');
+        console.error("Error fetching chat boxes:", err);
+        setError(err.message || "Failed to load chat boxes");
         // If unauthorized, logout user
-        if (err.message.includes('401') || err.message.includes('Unauthorized')) {
+        if (
+          err.message.includes("401") ||
+          err.message.includes("Unauthorized")
+        ) {
           logout();
         }
       } finally {
@@ -47,30 +117,48 @@ const ChatLayout = () => {
     fetchChatBoxes();
   }, [logout]);
 
-  // Fetch messages when group is selected
+  // Fetch messages and join room when group is selected
   useEffect(() => {
     if (!selectedGroupId) return;
 
-    const fetchMessages = async () => {
-      // Don't fetch if messages already exist for this group
-      if (messages[selectedGroupId]) return;
-
+    const fetchMessagesAndJoinRoom = async () => {
       try {
         setLoadingMessages(true);
-        const response = await chatBoxesAPI.getMessages(selectedGroupId);
-        
-        if (response.success && response.data) {
-          setMessages((prev) => ({
-            ...prev,
-            [selectedGroupId]: response.data,
-          }));
-        } else {
-          console.error('Failed to load messages');
+
+        // Leave previous room if exists
+        if (
+          currentRoomRef.current &&
+          currentRoomRef.current !== selectedGroupId
+        ) {
+          socketService.leaveRoom(currentRoomRef.current);
+        }
+
+        // Join new room
+        currentRoomRef.current = selectedGroupId;
+        socketService.joinRoom(selectedGroupId, () => {
+          console.log("[ChatLayout] Joined room:", selectedGroupId);
+        });
+
+        // Fetch existing messages (only if not already loaded)
+        if (!messages[selectedGroupId]) {
+          const response = await chatBoxesAPI.getMessages(selectedGroupId);
+
+          if (response.success && response.data) {
+            setMessages((prev) => ({
+              ...prev,
+              [selectedGroupId]: response.data,
+            }));
+          } else {
+            console.error("Failed to load messages");
+          }
         }
       } catch (err) {
-        console.error('Error fetching messages:', err);
+        console.error("Error fetching messages:", err);
         // If unauthorized, logout user
-        if (err.message.includes('401') || err.message.includes('Unauthorized')) {
+        if (
+          err.message.includes("401") ||
+          err.message.includes("Unauthorized")
+        ) {
           logout();
         }
       } finally {
@@ -78,18 +166,36 @@ const ChatLayout = () => {
       }
     };
 
-    fetchMessages();
-  }, [selectedGroupId]);
+    fetchMessagesAndJoinRoom();
+  }, [selectedGroupId, logout]);
 
   const handleSelectGroup = (groupId) => {
     setSelectedGroupId(groupId);
   };
 
   const handleSendMessage = (content) => {
-    // TODO: Implement send message API call
-    // For now, just show a message
-    console.log('Send message:', content);
-    alert('Chức năng gửi tin nhắn sẽ được thêm ở sprint sau');
+    if (!content || !content.trim()) {
+      return;
+    }
+
+    if (!selectedGroupId) {
+      console.error("[ChatLayout] No group selected");
+      return;
+    }
+
+    // Send message via socket
+    socketService.sendMessage(
+      content,
+      selectedGroupId,
+      () => {
+        console.log("[ChatLayout] Message sent successfully");
+        // Message will be added to state via socket listener
+      },
+      (error) => {
+        console.error("[ChatLayout] Failed to send message:", error);
+        alert(`メッセージの送信に失敗しました: ${error.message}`);
+      }
+    );
   };
 
   const selectedGroup = chatBoxes.find((g) => g.group_id === selectedGroupId);
@@ -142,7 +248,9 @@ const ChatLayout = () => {
       <div className="w-full h-screen flex items-center justify-center bg-gray-50">
         <div className="text-gray-600 text-center">
           <div className="text-lg mb-2">チャットボックスがありません</div>
-          <div className="text-sm text-gray-400">グループに参加してください</div>
+          <div className="text-sm text-gray-400">
+            グループに参加してください
+          </div>
         </div>
       </div>
     );
@@ -172,4 +280,3 @@ const ChatLayout = () => {
 };
 
 export default ChatLayout;
-

@@ -59,3 +59,8 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Force include frontend folder
 !fe/
+
+docker-compose.yml
+BACKEND_GUIDE.md
+SETUP_DATABASE.md
+TEST_API_GUIDE.md
