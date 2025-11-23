@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NestJS Realtime Chat</title>
+    <!-- Nhúng thư viện Socket.IO client từ CDN -->
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <style>
+        /* CSS cho giao diện người dùng */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            padding: 20px;
+            background-color: #f4f7f6; 
+            color: #333; 
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 800px; 
+            width: 100%;
+            margin: 0 auto; 
+            background-color: #fff; 
+            padding: 25px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+        }
+        h1 { 
+            text-align: center; 
+            color: #2c3e50; 
+            margin-bottom: 25px; 
+            font-size: 2em;
+        }
+        #auth-section, #user-info, #connection-status { 
+            margin-bottom: 20px; 
+            padding: 15px; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 5px; 
+            background-color: #f9fbfb; 
+        }
+        input[type="email"], input[type="password"], input[type="text"], input[type="number"] {
+            width: calc(100% - 22px); 
+            padding: 10px; 
+            margin-bottom: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px;
+            box-sizing: border-box; /* Đảm bảo padding và border không làm tăng width */
+        }
+        button {
+            padding: 10px 15px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            margin-right: 10px;
+            transition: background-color 0.3s ease;
+        }
+        #login-button, #register-button { 
+            background-color: #28a745; 
+            color: white; 
+        }
+        #login-button:hover, #register-button:hover { 
+            background-color: #218838; 
+        }
+        #send-button { 
+            background-color: #007bff; 
+            color: white; 
+        }
+        #send-button:hover { 
+            background-color: #0056b3; 
+        }
+        #join-group-button { background-color: #ffc107; color: #333; }
+        #join-group-button:hover { background-color: #e0a800; }
+        #leave-group-button { background-color: #dc3545; color: white; }
+        #leave-group-button:hover { background-color: #c82333; }
+        #load-history-button { background-color: #6c757d; color: white; margin-left: auto; }
+        #load-history-button:hover { background-color: #5a6268; }
+
+        #jwt-display { 
+            font-family: monospace; 
+            background-color: #e9ecef; 
+            padding: 5px; 
+            border-radius: 3px; 
+            word-break: break-all; 
+            display: block; /* Hiển thị trên dòng mới */
+            margin-top: 10px;
+        }
+        #ws-status { 
+            font-weight: bold; 
+        }
+        #chat-section { 
+            display: none; 
+            margin-top: 20px; 
+        }
+        #chat-window { 
+            border: 1px solid #b0e0e6; 
+            height: 350px; 
+            overflow-y: auto; 
+            padding: 15px; 
+            margin-bottom: 15px; 
+            background-color: #e0f2f7; 
+            border-radius: 5px; 
+        }
+        .message { 
+            margin-bottom: 8px; 
+            padding: 7px 10px; 
+            border-radius: 4px; 
+            max-width: 70%; 
+            word-wrap: break-word; 
+            line-height: 1.4;
+        }
+        .my-message { 
+            background-color: #d1ecf1; 
+            text-align: right; 
+            margin-left: auto; 
+            border: 1px solid #bee5eb; 
+        }
+        .other-message { 
+            background-color: #f8d7da; 
+            text-align: left; 
+            margin-right: auto; 
+            border: 1px solid #f5c6cb; 
+        }
+        .message-sender { 
+            font-weight: bold; 
+            font-size: 0.9em; 
+            margin-bottom: 3px; 
+            color: #2c3e50;
+        }
+        .message-content { 
+            font-size: 1em; 
+        }
+        .message-time { 
+            font-size: 0.7em; 
+            color: #6c757d; 
+            text-align: right; 
+            margin-top: 3px; 
+        }
+        .input-group { 
+            display: flex; 
+            align-items: center; 
+        }
+        .input-group #message-input { 
+            flex-grow: 1; /* Cho phép input mở rộng tối đa */
+            margin-bottom: 0; /* Loại bỏ margin-bottom mặc định */
+            margin-right: 10px; /* Khoảng cách với nút Send */
+        }
+        .error-message { 
+            color: red; 
+            font-weight: bold; 
+        }
+        .group-control-bar {
+            margin-bottom: 15px; 
+            display: flex; 
+            align-items: center;
+            flex-wrap: wrap; /* Cho phép xuống dòng trên màn hình nhỏ */
+        }
+        .group-control-bar label {
+            margin-right: 10px;
+        }
+        .group-control-bar input[type="number"] {
+            width: 100px;
+            margin-bottom: 0;
+            margin-right: 10px;
+        }
+        #joined-groups-display {
+            margin-left: 10px;
+            font-style: italic;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>NestJS Realtime Chat Demo</h1>
+
+        <div id="auth-section">
+            <input type="email" id="email-input" placeholder="Email" value="testuser@example.com">
+            <input type="password" id="password-input" placeholder="Password" value="password123">
+            <button id="login-button">Login</button>
+            <button id="register-button">Register</button>
+            <p>JWT Token: <span id="jwt-display"></span></p>
+        </div>
+
+        <div id="user-info">
+            <strong>Current User:</strong> <span id="current-user-name">Not logged in</span> (<span id="current-user-id"></span>)
+        </div>
+        <div id="connection-status">
+            WebSocket Status: <span id="ws-status" style="color: red;">Disconnected</span>
+        </div>
+        
+        <div id="chat-section">
+            <div class="group-control-bar">
+                <label for="group-id-input">Group ID:</label>
+                <input type="number" id="group-id-input" placeholder="e.g., 1" value="">
+                <button id="join-group-button">Join Group</button>
+                <button id="leave-group-button">Leave Group</button>
+                <button id="load-history-button">Load History</button>
+            </div>
+            <p>Joined Groups: <span id="joined-groups-display">None</span></p>
+            <hr>
+
+            <div id="chat-window"></div>
+            <div class="input-group">
+                <input type="text" id="message-input" placeholder="Type a message...">
+                <button id="send-button">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Cấu hình Backend ---
+        const BASE_URL = "http://localhost:3000"; 
+        const CHAT_NAMESPACE = "/chat"; // Namespace cho WebSocket Gateway
+
+        // --- Biến Trạng thái Toàn cục ---
+        let socket;
+        let jwtToken = '';
+        let currentUser = null;
+        const joinedGroups = new Set(); // Theo dõi các nhóm mà client đã tham gia
+
+        // --- Lấy các phần tử DOM ---
+        const emailInput = document.getElementById('email-input');
+        const passwordInput = document.getElementById('password-input');
+        const loginButton = document.getElementById('login-button');
+        const registerButton = document.getElementById('register-button');
+        const jwtDisplay = document.getElementById('jwt-display');
+        const currentUserNameDisplay = document.getElementById('current-user-name');
+        const currentUserIdDisplay = document.getElementById('current-user-id');
+        const wsStatusDisplay = document.getElementById('ws-status');
+        const chatSection = document.getElementById('chat-section');
+        const chatWindow = document.getElementById('chat-window');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const groupIdInput = document.getElementById('group-id-input');
+        const loadHistoryButton = document.getElementById('load-history-button');
+        const joinGroupButton = document.getElementById('join-group-button');
+        const leaveGroupButton = document.getElementById('leave-group-button');
+        const joinedGroupsDisplay = document.getElementById('joined-groups-display');
+
+
+        /**
+         * Thêm tin nhắn vào cửa sổ chat.
+         * @param {object} message - Đối tượng tin nhắn từ server.
+         * @param {boolean} isMine - true nếu tin nhắn là của người dùng hiện tại (để định dạng).
+         */
+        function appendMessage(message, isMine = false) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${isMine ? 'my-message' : 'other-message'}`;
+            
+            const senderName = message.sender ? message.sender.name : 'Unknown';
+            const timestamp = new Date(message.created_at || Date.now()).toLocaleTimeString();
+
+            // Hiển thị Group ID nếu có
+            const groupInfo = message.group_id ? ` (Group ${message.group_id})` : '';
+
+            msgDiv.innerHTML = `
+                <div class="message-sender">${senderName}${groupInfo}</div>
+                <div class="message-content">${message.content}</div>
+                <div class="message-time">${timestamp}</div>
+            `;
+            chatWindow.appendChild(msgDiv);
+            chatWindow.scrollTop = chatWindow.scrollHeight; // Cuộn xuống cuối chat
+        }
+
+        /**
+         * Cập nhật hiển thị các nhóm đã tham gia.
+         */
+        function updateJoinedGroupsDisplay() {
+            joinedGroupsDisplay.textContent = Array.from(joinedGroups).sort((a,b) => a - b).join(', ') || 'None';
+        }
+
+        /**
+         * Kết nối đến WebSocket server.
+         */
+        function connectWebSocket() {
+            if (socket && socket.connected) {
+                console.log("WebSocket: Already connected, skipping new connection.");
+                return;
+            }
+            if (!jwtToken) {
+                console.warn("WebSocket: No JWT token found. Cannot connect.");
+                alert("Please login first to get a JWT token.");
+                return;
+            }
+
+            wsStatusDisplay.textContent = 'Connecting...';
+            wsStatusDisplay.style.color = 'orange';
+
+            console.log("WebSocket: Attempting to connect to:", `${BASE_URL}${CHAT_NAMESPACE}`);
+            console.log("WebSocket: JWT Token (first 30 chars) for WS connection:", jwtToken.substring(0, 30) + '...'); 
+
+            socket = io(`${BASE_URL}${CHAT_NAMESPACE}`, {
+              query: { token: jwtToken }, // Truyền JWT qua query parameter
+              transports: ['websocket', 'polling'], // Ưu tiên WebSocket, fallback sang polling
+              reconnectionAttempts: 5 // Số lần thử kết nối lại
+            });
+
+            // --- Lắng nghe các sự kiện Socket.IO ---
+            socket.on('connect', () => {
+                console.log('WebSocket: Connected to server with ID:', socket.id);
+                wsStatusDisplay.textContent = 'Connected';
+                wsStatusDisplay.style.color = 'green';
+                chatSection.style.display = 'block'; 
+                loadHistoryButton.click(); // Tự động load lịch sử sau khi kết nối
+
+                // Khi reconnect, gửi lại các sự kiện joinRoom cho các nhóm đã tham gia
+                joinedGroups.forEach(id => {
+                    socket.emit('joinRoom', id);
+                    console.log(`WebSocket: Re-joining group-${id}`);
+                });
+                updateJoinedGroupsDisplay();
+            });
+
+            socket.on('disconnect', (reason) => {
+                console.log('WebSocket: Disconnected from server:', reason);
+                wsStatusDisplay.textContent = `Disconnected (${reason})`;
+                wsStatusDisplay.style.color = 'red';
+                chatSection.style.display = 'none'; 
+            });
+
+            socket.on('connect_error', (error) => {
+                console.error('WebSocket: Connection error:', error.message);
+                wsStatusDisplay.textContent = `Connect Error (${error.message})`;
+                wsStatusDisplay.style.color = 'red';
+            });
+
+            socket.on('error', (serverError) => {
+                console.error('WebSocket: Server emitted error:', serverError);
+                // Xử lý lỗi từ server, đặc biệt là lỗi xác thực
+                if (serverError.type === 'auth_error') {
+                    alert(`Authentication failed: ${serverError.message}. Please login again.`);
+                    jwtToken = ''; 
+                    localStorage.removeItem('jwtToken');
+                    location.reload(); 
+                } else {
+                    alert(`Server Error: ${serverError.message}`);
+                }
+            });
+
+            socket.on('receiveMessage', (message) => {
+                console.log('WebSocket: Received message:', message);
+                
+                // Lấy Group ID hiện tại mà người dùng đang xem
+                const currentGroupIdValue = groupIdInput.value;
+                const currentGroupId = currentGroupIdValue ? parseInt(currentGroupIdValue) : null;
+                
+                // Kiểm tra xem tin nhắn có thuộc group mà client đang xem không
+                const messageBelongsToCurrentView = 
+                    (currentGroupId === null && message.group_id === null) || // Client xem general, message cũng general
+                    (currentGroupId !== null && !isNaN(currentGroupId) && message.group_id === currentGroupId); // Client xem group, message khớp group
+                
+                if (messageBelongsToCurrentView) {
+                    const isMine = currentUser && message.sender && message.sender.user_id === currentUser.user_id;
+                    appendMessage(message, isMine);
+                } else {
+                    console.log(`WebSocket: Message for a different group (${message.group_id}) received, not displayed in current view (Group ID ${currentGroupId}).`);
+                }
+            });
+
+            socket.on('joinedRoom', (message) => {
+                console.log('WebSocket:', message);
+                // alert(message); // Có thể bỏ alert này nếu quá nhiều
+            });
+            socket.on('leftRoom', (message) => {
+                console.log('WebSocket:', message);
+                // alert(message); // Có thể bỏ alert này nếu quá nhiều
+            });
+        }
+
+        /**
+         * Gửi yêu cầu HTTP cho đăng ký/đăng nhập.
+         * @param {string} endpoint - 'register' hoặc 'login'.
+         * @param {object} data - Dữ liệu đăng ký/đăng nhập.
+         * @returns {Promise<object|null>} - Phản hồi từ server.
+         */
+        async function handleAuth(endpoint, data) {
+            try {
+                const response = await fetch(`${BASE_URL}/auth/${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.message || `HTTP error! status: ${response.status}`);
+                }
+                return result;
+            } catch (error) {
+                console.error(`HTTP: Error during ${endpoint}:`, error);
+                alert(`Error during ${endpoint}: ${error.message}`);
+                return null;
+            }
+        }
+
+        /**
+         * Lấy thông tin profile người dùng sau khi đăng nhập.
+         */
+        async function fetchUserProfile() {
+            if (!jwtToken) {
+                console.warn("HTTP: No JWT token available for fetching profile.");
+                return;
+            }
+            try {
+                const profileResponse = await fetch(`${BASE_URL}/auth/profile`, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${jwtToken}` }
+                });
+                const profile = await profileResponse.json();
+                if (!profileResponse.ok) {
+                    throw new Error(profile.message || "Failed to fetch profile");
+                }
+                currentUser = profile;
+                currentUserNameDisplay.textContent = profile.name;
+                currentUserIdDisplay.textContent = profile.user_id;
+                console.log("HTTP: Logged in as:", currentUser);
+                connectWebSocket(); // Kết nối WebSocket sau khi có token và user info
+            } catch (error) {
+                console.error("HTTP: Failed to fetch user profile:", error);
+                alert("Failed to fetch user profile: " + error.message);
+                jwtToken = ''; // Xóa token nếu không thể lấy profile
+                localStorage.removeItem('jwtToken');
+                location.reload(); // Tải lại trang
+            }
+        }
+
+        /**
+         * Tải lịch sử tin nhắn cho nhóm hiện tại hoặc chat chung.
+         */
+        async function loadChatHistory() {
+            chatWindow.innerHTML = ''; // Xóa tin nhắn cũ
+            const groupId = groupIdInput.value ? parseInt(groupIdInput.value) : null;
+            const historyUrl = groupId ? `${BASE_URL}/messages/group/${groupId}` : `${BASE_URL}/messages/general`;
+
+            if (!jwtToken) {
+                alert("Please login to load chat history.");
+                return;
+            }
+
+            try {
+                const response = await fetch(historyUrl, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${jwtToken}` }
+                });
+                const messages = await response.json();
+                if (!response.ok) {
+                    throw new Error(messages.message || `HTTP error! status: ${response.status}`);
+                }
+                // Hiển thị tin nhắn từ cũ nhất đến mới nhất
+                messages.forEach(msg => {
+                    const isMine = currentUser && msg.sender && msg.sender.user_id === currentUser.user_id;
+                    appendMessage(msg, isMine);
+                });
+                console.log(`HTTP: Loaded ${messages.length} messages for group ${groupId || 'general'}.`);
+            } catch (error) {
+                console.error("HTTP: Error loading chat history:", error);
+                alert(`Error loading chat history: ${error.message}`);
+            }
+        }
+
+        // --- Event Listeners ---
+        loginButton.addEventListener('click', async () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            const result = await handleAuth('login', { email, password });
+            if (result && result.access_token) {
+                jwtToken = result.access_token;
+                jwtDisplay.textContent = jwtToken.substring(0, 30) + '...'; 
+                localStorage.setItem('jwtToken', jwtToken); // Lưu JWT vào localStorage
+                await fetchUserProfile(); // Lấy profile và kết nối WS
+            }
+        });
+
+        registerButton.addEventListener('click', async () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            const name = email.split('@')[0];
+            const result = await handleAuth('register', { name, email, password, nationality: 'Vietnam' });
+            if (result && result.user_id) {
+                alert(`User ${result.name} registered successfully with ID: ${result.user_id}. Now logging in...`);
+                loginButton.click(); 
+            }
+        });
+
+        sendButton.addEventListener('click', () => {
+            const content = messageInput.value;
+            const groupId = groupIdInput.value ? parseInt(groupIdInput.value) : null;
+            
+            if (!content.trim()) {
+                alert("Message cannot be empty.");
+                return;
+            }
+            if (!socket || !socket.connected) {
+                alert("Not connected to chat server. Please login.");
+                return;
+            }
+
+            socket.emit('sendMessage', { content, groupId: isNaN(groupId) ? null : groupId });
+            messageInput.value = ''; 
+            // Hiển thị tin nhắn của mình ngay lập tức (tùy chọn)
+            appendMessage({ sender: currentUser, content, group_id: isNaN(groupId) ? null : groupId, created_at: Date.now() }, true);
+        });
+
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendButton.click();
+            }
+        });
+
+        loadHistoryButton.addEventListener('click', loadChatHistory);
+
+        joinGroupButton.addEventListener('click', () => {
+            const groupId = groupIdInput.value ? parseInt(groupIdInput.value) : null;
+            if (!socket || !socket.connected) {
+                alert("Not connected to chat server. Please login.");
+                return;
+            }
+            if (!groupId || isNaN(groupId) || groupId <= 0) {
+                alert("Invalid Group ID. Must be a positive integer.");
+                return;
+            }
+            if (joinedGroups.has(groupId)) {
+                alert(`Already joined group ${groupId}.`);
+                return;
+            }
+            socket.emit('joinRoom', groupId);
+            joinedGroups.add(groupId);
+            updateJoinedGroupsDisplay();
+        });
+
+        leaveGroupButton.addEventListener('click', () => {
+            const groupId = groupIdInput.value ? parseInt(groupIdInput.value) : null;
+            if (!socket || !socket.connected) {
+                alert("Not connected to chat server. Please login.");
+                return;
+            }
+            if (!groupId || isNaN(groupId) || groupId <= 0) {
+                alert("Invalid Group ID. Must be a positive integer.");
+                return;
+            }
+            if (!joinedGroups.has(groupId)) {
+                alert(`Not currently in group ${groupId}.`);
+                return;
+            }
+            socket.emit('leaveRoom', groupId);
+            joinedGroups.delete(groupId);
+            updateJoinedGroupsDisplay();
+        });
+
+
+        // --- Khởi tạo khi tải trang ---
+        window.addEventListener('load', async () => { 
+            const storedJwt = localStorage.getItem('jwtToken');
+            if (storedJwt) {
+                jwtToken = storedJwt;
+                jwtDisplay.textContent = jwtToken.substring(0, 30) + '...';
+                await fetchUserProfile(); // Lấy profile và kết nối WS
+            } else {
+                console.log("No JWT found in localStorage. Please login.");
+                chatSection.style.display = 'none'; // Ẩn phần chat nếu chưa đăng nhập
+            }
+        });
+    </script>
+</body>
+</html> 
