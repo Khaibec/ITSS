@@ -32,7 +32,7 @@ const MessageList = ({ messages, currentUser }) => {
           <MessageItem
             key={message.message_id}
             message={message}
-            isOwnMessage={message.sender_id === currentUser.user_id}
+            isOwnMessage={message.sender?.user_id === currentUser.user_id}
           />
         ))}
         <div ref={messagesEndRef} />

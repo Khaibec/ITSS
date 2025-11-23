@@ -1,0 +1,445 @@
+{
+	"info": {
+		"_postman_id": "chat-boxes-api-collection",
+		"name": "Chat Boxes API",
+		"description": "Collection for testing Chat Boxes API endpoints with JWT authentication",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Login - Get JWT Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Auto-save JWT token to collection variable",
+							"if (pm.response.code === 200) {",
+							"    const jsonData = pm.response.json();",
+							"    if (jsonData.access_token) {",
+							"        pm.collectionVariables.set(\"jwt_token\", jsonData.access_token);",
+							"        console.log(\"✅ JWT token saved to collection variable\");",
+							"        console.log(\"Token: \" + jsonData.access_token.substring(0, 50) + \"...\");",
+							"    }",
+							"}",
+							"",
+							"// Test response",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response has access_token\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('access_token');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"your-email@example.com\",\n    \"password\": \"your-password\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/auth/login",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"auth",
+						"login"
+					]
+				},
+				"description": "Login to get JWT access token. The token will be automatically saved to collection variable `jwt_token`."
+			},
+			"response": []
+		},
+		{
+			"name": "2. Get Chat Boxes",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test response structure",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response has success field\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('success');",
+							"    pm.expect(jsonData.success).to.be.true;",
+							"});",
+							"",
+							"pm.test(\"Response has data array\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('data');",
+							"    pm.expect(jsonData.data).to.be.an('array');",
+							"});",
+							"",
+							"pm.test(\"Chat box items have required fields\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    if (jsonData.data && jsonData.data.length > 0) {",
+							"        const firstItem = jsonData.data[0];",
+							"        pm.expect(firstItem).to.have.property('group_id');",
+							"        pm.expect(firstItem).to.have.property('group_name');",
+							"        pm.expect(firstItem).to.have.property('unread_count');",
+							"        pm.expect(firstItem).to.have.property('created_at');",
+							"    }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/chat-boxes",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"chat-boxes"
+					]
+				},
+				"description": "Get all chat boxes (conversations) for the authenticated user. Requires JWT token in Authorization header."
+			},
+			"response": []
+		},
+		{
+			"name": "3. Get Chat Box Messages",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test response structure",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response has success field\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('success');",
+							"    pm.expect(jsonData.success).to.be.true;",
+							"});",
+							"",
+							"pm.test(\"Response has data array\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('data');",
+							"    pm.expect(jsonData.data).to.be.an('array');",
+							"});",
+							"",
+							"pm.test(\"Message items have required fields\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    if (jsonData.data && jsonData.data.length > 0) {",
+							"        const firstMessage = jsonData.data[0];",
+							"        pm.expect(firstMessage).to.have.property('message_id');",
+							"        pm.expect(firstMessage).to.have.property('content');",
+							"        pm.expect(firstMessage).to.have.property('created_at');",
+							"        pm.expect(firstMessage).to.have.property('sender');",
+							"        ",
+							"        // Check sender object structure",
+							"        pm.expect(firstMessage.sender).to.have.property('user_id');",
+							"        pm.expect(firstMessage.sender).to.have.property('name');",
+							"        pm.expect(firstMessage.sender).to.have.property('email');",
+							"    }",
+							"});",
+							"",
+							"pm.test(\"Messages are ordered from oldest to newest\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    if (jsonData.data && jsonData.data.length > 1) {",
+							"        const messages = jsonData.data;",
+							"        for (let i = 1; i < messages.length; i++) {",
+							"            const prevTime = new Date(messages[i-1].created_at).getTime();",
+							"            const currTime = new Date(messages[i].created_at).getTime();",
+							"            pm.expect(currTime).to.be.at.least(prevTime);",
+							"        }",
+							"    }",
+							"});",
+							"",
+							"pm.test(\"Maximum 40 messages returned\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    if (jsonData.data) {",
+							"        pm.expect(jsonData.data.length).to.be.at.most(40);",
+							"    }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/chat-boxes/:groupId/messages",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"chat-boxes",
+						":groupId",
+						"messages"
+					],
+					"variable": [
+						{
+							"key": "groupId",
+							"value": "1",
+							"description": "ID of the chat group. Replace with actual group_id from Get Chat Boxes response."
+						}
+					]
+				},
+				"description": "Get the 40 most recent messages from a specific chat box (group). Messages are ordered from oldest to newest. Requires JWT token in Authorization header. User must be a member of the group to access its messages.\n\n**Usage:**\n1. First, run 'Get Chat Boxes' to see available groups\n2. Replace `:groupId` in URL with actual group_id (e.g., change `:groupId` to `1`)\n3. Send request\n\n**Response:**\n- Returns array of up to 40 messages\n- Each message includes: message_id, content, created_at, sender (user_id, name, email)\n- Messages sorted from oldest to newest"
+			},
+			"response": []
+		},
+		{
+			"name": "4. Error Tests",
+			"item": [
+				{
+					"name": "4.1 Missing Authorization Header",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test(\"Error message is Unauthorized\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.equal('Unauthorized');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/chat-boxes",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"chat-boxes"
+							]
+						},
+						"description": "Test error handling when Authorization header is missing. Expected: 401 Unauthorized"
+					},
+					"response": []
+				},
+				{
+					"name": "4.2 Invalid JWT Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "invalid_token_12345",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/chat-boxes",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"chat-boxes"
+							]
+						},
+						"description": "Test error handling with invalid JWT token. Expected: 401 Unauthorized"
+					},
+					"response": []
+				},
+				{
+					"name": "4.3 Get Messages - Invalid Group ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"pm.test(\"Error message indicates not found\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('statusCode');",
+									"    pm.expect(jsonData.statusCode).to.equal(404);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/chat-boxes/99999/messages",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"chat-boxes",
+								"99999",
+								"messages"
+							]
+						},
+						"description": "Test error handling when requesting messages from a non-existent group ID. Expected: 404 Not Found"
+					},
+					"response": []
+				},
+				{
+					"name": "4.4 Get Messages - Missing Authorization",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test(\"Error message is Unauthorized\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.equal('Unauthorized');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/chat-boxes/1/messages",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"chat-boxes",
+								"1",
+								"messages"
+							]
+						},
+						"description": "Test error handling when Authorization header is missing for Get Messages endpoint. Expected: 401 Unauthorized"
+					},
+					"response": []
+				}
+			],
+			"description": "Collection of error scenario tests"
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "jwt_token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
+

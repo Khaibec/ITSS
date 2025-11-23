@@ -16,6 +16,22 @@ const MessageItem = ({ message, isOwnMessage }) => {
     });
   };
 
+  // Generate avatar URL if not provided
+  const getAvatarUrl = (sender) => {
+    if (sender?.avatar) return sender.avatar;
+    if (sender?.name) {
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(sender.name)}&background=4F46E5&color=fff`;
+    }
+    if (sender?.email) {
+      const name = sender.email.split('@')[0];
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=4F46E5&color=fff`;
+    }
+    return `https://ui-avatars.com/api/?name=User&background=gray&color=fff`;
+  };
+
+  const senderName = message.sender?.name || message.sender?.email || 'Unknown User';
+  const avatarUrl = getAvatarUrl(message.sender);
+
   return (
     <div
       className={`
@@ -24,8 +40,8 @@ const MessageItem = ({ message, isOwnMessage }) => {
       `}
     >
       <img
-        src={message.sender.avatar}
-        alt={message.sender.name}
+        src={avatarUrl}
+        alt={senderName}
         className="w-10 h-10 rounded-full object-cover shrink-0"
       />
 
@@ -37,7 +53,7 @@ const MessageItem = ({ message, isOwnMessage }) => {
       >
         {!isOwnMessage && (
           <div className="text-xs text-gray-500 mb-1 pl-3">
-            {message.sender.name}
+            {senderName}
           </div>
         )}
 

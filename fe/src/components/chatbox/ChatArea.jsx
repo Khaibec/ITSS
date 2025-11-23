@@ -1,7 +1,7 @@
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
 
-const ChatArea = ({ group, messages, currentUser, onSendMessage }) => {
+const ChatArea = ({ group, messages, currentUser, onSendMessage, loadingMessages }) => {
   if (!group) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-50">
@@ -18,7 +18,13 @@ const ChatArea = ({ group, messages, currentUser, onSendMessage }) => {
         </h2>
       </div>
 
-      <MessageList messages={messages} currentUser={currentUser} />
+      {loadingMessages ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-gray-600">メッセージを読み込み中...</div>
+        </div>
+      ) : (
+        <MessageList messages={messages} currentUser={currentUser} />
+      )}
 
       <MessageInput onSendMessage={onSendMessage} />
     </div>
