@@ -82,6 +82,26 @@ export const authAPI = {
   },
 
   /**
+   * Register user
+   * @param {{name:string,nationality:string,email:string,password:string}} payload
+   */
+  register: async (payload) => {
+    const data = await apiRequest('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    return data;
+  },
+
+  /**
+   * Get current user profile (requires Authorization header)
+   */
+  getProfile: async () => {
+    return await apiRequest('/auth/profile', { method: 'GET' });
+  },
+
+  /**
    * Logout user
    */
   logout: () => {

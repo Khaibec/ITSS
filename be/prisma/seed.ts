@@ -45,167 +45,261 @@ async function main() {
   const password3 = await bcrypt.hash('password123', 10);
   const password4 = await bcrypt.hash('password123', 10);
   
-  const user1 = await prisma.users.upsert({
-    where: { email: 'a.nguyen@example.com' },
-    update: {},
-    create: {
-      name: 'Nguyen Van A',
-      nationality: 'Vietnam',
-      email: 'a.nguyen@example.com',
-      password_hash: password1,
-      login_provider: 'local',
-    },
-  });
+    const user1 = await prisma.users.upsert({
+      where: { email: 'yorifuji.kiyoshi@example.com' },
+      update: {},
+      create: {
+        name: 'Yorifuji Kiyoshi',
+        nationality: 'Japanese',
+        email: 'yorifuji.kiyoshi@example.com',
+        password_hash: password1,
+        login_provider: 'local',
+      },
+    });
 
-  const user2 = await prisma.users.upsert({
-    where: { email: 'b.tran@example.com' },
-    update: {},
-    create: {
-      name: 'Tran Thi B',
-      nationality: 'Vietnam',
-      email: 'b.tran@example.com',
-      password_hash: password2,
-      login_provider: 'local',
-    },
-  });
+    const user2 = await prisma.users.upsert({
+      where: { email: 'le.sang.hiec@example.com' },
+      update: {},
+      create: {
+        name: 'Lê Sang Hiếc',
+        nationality: 'Vietnamese',
+        email: 'le.sang.hiec@example.com',
+        password_hash: password2,
+        login_provider: 'local',
+      },
+    });
 
-  const user3 = await prisma.users.upsert({
-    where: { email: 'taro.yamada@example.jp' },
-    update: {},
-    create: {
-      name: 'Yamada Taro',
-      nationality: 'Japan',
-      email: 'taro.yamada@example.jp',
-      password_hash: password3,
-      login_provider: 'local',
-    },
-  });
+    const user3 = await prisma.users.upsert({
+      where: { email: 'ryo.kimura@example.com' },
+      update: {},
+      create: {
+        name: 'Ryo Kimura',
+        nationality: 'Japanese',
+        email: 'ryo.kimura@example.com',
+        password_hash: password3,
+        login_provider: 'local',
+      },
+    });
 
-  const user4 = await prisma.users.upsert({
-    where: { email: 'hanako.suzuki@example.jp' },
-    update: {},
-    create: {
-      name: 'Suzuki Hanako',
-      nationality: 'Japan',
-      email: 'hanako.suzuki@example.jp',
-      password_hash: password4,
-      login_provider: 'local',
-    },
-  });
+    const user4 = await prisma.users.upsert({
+      where: { email: 'nguyen.hong.diem@example.com' },
+      update: {},
+      create: {
+        name: 'Nguyễn Hồng Diễm',
+        nationality: 'Vietnamese',
+        email: 'nguyen.hong.diem@example.com',
+        password_hash: password4,
+        login_provider: 'local',
+      },
+    });
 
   console.log(`✅ Created ${4} users\n`);
 
   // 2. Create Chat Groups
   console.log('2️⃣ Creating chat groups...');
-  const group1 = await prisma.chat_groups.upsert({
-    where: { group_id: 1 },
-    update: {},
-    create: {
-      group_name: 'Team Viet-Japan',
-      icon_url: 'https://example.com/icons/team1.png',
-      created_by: user1.user_id,
-    },
-  });
+    const group1 = await prisma.chat_groups.upsert({
+      where: { group_id: 1 },
+      update: {},
+      create: {
+        group_name: 'ITSS 七つの大罪',
+        icon_url: 'https://ui-avatars.com/api/?name=ITSS&background=4F46E5&color=fff',
+        created_by: user1.user_id,
+      },
+    });
 
-  const group2 = await prisma.chat_groups.upsert({
-    where: { group_id: 2 },
-    update: {},
-    create: {
-      group_name: 'Project Chat',
-      icon_url: 'https://example.com/icons/project.png',
-      created_by: user3.user_id,
-    },
-  });
+    const group2 = await prisma.chat_groups.upsert({
+      where: { group_id: 2 },
+      update: {},
+      create: {
+        group_name: 'ITSS K67 火2',
+        icon_url: 'https://ui-avatars.com/api/?name=ITSS+K67&background=EC4899&color=fff',
+        created_by: user1.user_id,
+      },
+    });
+
+    const group3 = await prisma.chat_groups.upsert({
+      where: { group_id: 3 },
+      update: {},
+      create: {
+        group_name: '開発チーム',
+        icon_url: 'https://ui-avatars.com/api/?name=Dev+Team&background=10B981&color=fff',
+        created_by: user2.user_id,
+      },
+    });
+
+    const group4 = await prisma.chat_groups.upsert({
+      where: { group_id: 4 },
+      update: {},
+      create: {
+        group_name: 'ツボ草',
+        icon_url: 'https://ui-avatars.com/api/?name=Tsubo+Kusa&background=F59E0B&color=fff',
+        created_by: user3.user_id,
+      },
+    });
 
   console.log(`✅ Created ${2} groups\n`);
 
   // 3. Create Group Members
   console.log('3️⃣ Adding group members...');
-  await prisma.group_members.upsert({
-    where: {
-      group_id_user_id: {
+    // Group 1 members: [1, 2]
+    await prisma.group_members.upsert({
+      where: {
+        group_id_user_id: {
+          group_id: group1.group_id,
+          user_id: user1.user_id,
+        },
+      },
+      update: {},
+      create: {
         group_id: group1.group_id,
         user_id: user1.user_id,
       },
-    },
-    update: {},
-    create: {
-      group_id: group1.group_id,
-      user_id: user1.user_id,
-    },
-  });
+    });
 
-  await prisma.group_members.upsert({
-    where: {
-      group_id_user_id: {
+    await prisma.group_members.upsert({
+      where: {
+        group_id_user_id: {
+          group_id: group1.group_id,
+          user_id: user2.user_id,
+        },
+      },
+      update: {},
+      create: {
         group_id: group1.group_id,
         user_id: user2.user_id,
       },
-    },
-    update: {},
-    create: {
-      group_id: group1.group_id,
-      user_id: user2.user_id,
-    },
-  });
+    });
 
-  await prisma.group_members.upsert({
-    where: {
-      group_id_user_id: {
-        group_id: group1.group_id,
-        user_id: user3.user_id,
+    // Group 2 members: [1, 3, 4]
+    await prisma.group_members.upsert({
+      where: {
+        group_id_user_id: {
+          group_id: group2.group_id,
+          user_id: user1.user_id,
+        },
       },
-    },
-    update: {},
-    create: {
-      group_id: group1.group_id,
-      user_id: user3.user_id,
-    },
-  });
-
-  await prisma.group_members.upsert({
-    where: {
-      group_id_user_id: {
-        group_id: group1.group_id,
-        user_id: user4.user_id,
-      },
-    },
-    update: {},
-    create: {
-      group_id: group1.group_id,
-      user_id: user4.user_id,
-    },
-  });
-
-  await prisma.group_members.upsert({
-    where: {
-      group_id_user_id: {
+      update: {},
+      create: {
         group_id: group2.group_id,
         user_id: user1.user_id,
       },
-    },
-    update: {},
-    create: {
-      group_id: group2.group_id,
-      user_id: user1.user_id,
-    },
-  });
+    });
 
-  await prisma.group_members.upsert({
-    where: {
-      group_id_user_id: {
+    await prisma.group_members.upsert({
+      where: {
+        group_id_user_id: {
+          group_id: group2.group_id,
+          user_id: user3.user_id,
+        },
+      },
+      update: {},
+      create: {
         group_id: group2.group_id,
         user_id: user3.user_id,
       },
-    },
-    update: {},
-    create: {
-      group_id: group2.group_id,
-      user_id: user3.user_id,
-    },
-  });
+    });
 
-  console.log(`✅ Added ${6} group members\n`);
+    await prisma.group_members.upsert({
+      where: {
+        group_id_user_id: {
+          group_id: group2.group_id,
+          user_id: user4.user_id,
+        },
+      },
+      update: {},
+      create: {
+        group_id: group2.group_id,
+        user_id: user4.user_id,
+      },
+    });
+
+    // Group 3 members: [2, 3, 4]
+    await prisma.group_members.upsert({
+      where: {
+        group_id_user_id: {
+          group_id: group3.group_id,
+          user_id: user2.user_id,
+        },
+      },
+      update: {},
+      create: {
+        group_id: group3.group_id,
+        user_id: user2.user_id,
+      },
+    });
+
+    await prisma.group_members.upsert({
+      where: {
+        group_id_user_id: {
+          group_id: group3.group_id,
+          user_id: user3.user_id,
+        },
+      },
+      update: {},
+      create: {
+        group_id: group3.group_id,
+        user_id: user3.user_id,
+      },
+    });
+
+    await prisma.group_members.upsert({
+      where: {
+        group_id_user_id: {
+          group_id: group3.group_id,
+          user_id: user4.user_id,
+        },
+      },
+      update: {},
+      create: {
+        group_id: group3.group_id,
+        user_id: user4.user_id,
+      },
+    });
+
+    // Group 4 members: [1, 2, 3]
+    await prisma.group_members.upsert({
+      where: {
+        group_id_user_id: {
+          group_id: group4.group_id,
+          user_id: user1.user_id,
+        },
+      },
+      update: {},
+      create: {
+        group_id: group4.group_id,
+        user_id: user1.user_id,
+      },
+    });
+
+    await prisma.group_members.upsert({
+      where: {
+        group_id_user_id: {
+          group_id: group4.group_id,
+          user_id: user2.user_id,
+        },
+      },
+      update: {},
+      create: {
+        group_id: group4.group_id,
+        user_id: user2.user_id,
+      },
+    });
+
+    await prisma.group_members.upsert({
+      where: {
+        group_id_user_id: {
+          group_id: group4.group_id,
+          user_id: user3.user_id,
+        },
+      },
+      update: {},
+      create: {
+        group_id: group4.group_id,
+        user_id: user3.user_id,
+      },
+    });
+
+    console.log(`✅ Added group members\n`);
 
   // 4. Create Messages
   console.log('4️⃣ Creating messages...');
