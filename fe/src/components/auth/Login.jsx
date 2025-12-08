@@ -1,35 +1,33 @@
-import { useState } from 'react';
-import { authAPI } from '../../services/api';
-import { useAuth } from '../../contexts/AuthContext';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
   const { login } = useAuth();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
+    setError("");
+    setIsLoading(true);
 
     try {
-      const response = await authAPI.login(email, password);
-      
-      if (response.access_token) {
-        // Login successful - user data will be fetched when needed
-        login({
-          email: email,
-          // You can decode JWT to get more user info if needed
-        });
-      } else {
-        setError('Đăng nhập thất bại. Vui lòng thử lại.');
-      }
+      // Call AuthContext.login which handles token storage and profile fetch
+      await login({ email, password });
+      navigate("/chatbox/groups");
     } catch (err) {
-      setError(err.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu.');
+      setError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "ログインに失敗しました。メールとパスワードを確認してください。"
+      );
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -80,10 +78,10 @@ const Login = () => {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={isLoading}
             className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
-            {loading ? 'ログイン中...' : 'ログイン'}
+            {isLoading ? 'ログイン中...' : 'ログイン'}
           </button>
         </form>
 
