@@ -57,9 +57,7 @@ function AppContent() {
         path="/chatbox/groups/:groupId"
         element={
           isAuthenticated ? (
-            <MainLayout>
-              <ChatInterface />
-            </MainLayout>
+            <ChatInterface />
           ) : (
             <Navigate to="/login" replace />
           )

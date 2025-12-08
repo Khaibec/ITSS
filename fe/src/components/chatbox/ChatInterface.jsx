@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import ChatArea from "./ChatArea";
 import { chatBoxesAPI, getToken } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
@@ -8,8 +8,10 @@ import socketService from "../../api/socket";
 
 const ChatInterface = () => {
   const { groupId } = useParams();
+  const navigate = useNavigate();
   const { logout } = useAuth();
   const [selectedGroup, setSelectedGroup] = useState(null);
+  const [chatBoxes, setChatBoxes] = useState([]);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -101,6 +103,7 @@ const ChatInterface = () => {
         // Fetch all chat boxes to get group info
         const chatBoxesResponse = await chatBoxesAPI.getChatBoxes();
         if (chatBoxesResponse.success && chatBoxesResponse.data) {
+          setChatBoxes(chatBoxesResponse.data);
           const group = chatBoxesResponse.data.find(
             (g) => g.group_id === parseInt(groupId)
           );
@@ -153,6 +156,9 @@ const ChatInterface = () => {
 
     fetchGroupAndMessages();
   }, [groupId, logout]);
+
+  const handleBack = () => navigate("/chatbox/groups");
+  const handleSelectGroup = (id) => navigate(`/chatbox/groups/${id}`);
 
   const handleSendMessage = (content) => {
     if (!content || !content.trim()) {
@@ -220,13 +226,81 @@ const ChatInterface = () => {
   }
 
   return (
-    <ChatArea
-      group={selectedGroup}
-      messages={messages}
-      currentUser={currentUser}
-      onSendMessage={handleSendMessage}
-      loadingMessages={loadingMessages}
-    />
+    <div className="flex flex-col h-screen bg-white">
+      {/* Header with logo and back button */}
+      <header className="flex items-center justify-between px-6 py-3 border-b border-gray-300">
+        <div className="text-2xl font-bold tracking-[2px] text-gray-800">
+          MAJIWAKARU
+        </div>
+        <button
+          onClick={handleBack}
+          className="w-12 h-12 rounded-full border-2 border-gray-500 text-gray-700 flex items-center justify-center hover:bg-gray-100 transition"
+          aria-label="Back"
+          title="Back"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            className="w-7 h-7"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M15 6l-6 6 6 6" />
+          </svg>
+        </button>
+      </header>
+
+      {/* Two-column layout */}
+      <div className="flex flex-1 min-h-0">
+        {/* Left column: group list */}
+        <aside className="w-[28%] min-w-[260px] bg-white border-r-2 border-gray-300 flex flex-col overflow-y-auto">
+          <div className="px-5 py-4 border-b border-gray-200 bg-gray-100">
+            <h3 className="text-base font-semibold text-gray-800">グループ一覧</h3>
+          </div>
+          <div className="flex-1 overflow-y-auto scrollbar-thin">
+            {chatBoxes.map((group) => {
+              const isActive = group.group_id === parseInt(groupId);
+              return (
+                <div
+                  key={group.group_id}
+                  className={`flex items-center gap-3 px-5 py-4 cursor-pointer transition-colors border-b border-gray-200 ${
+                    isActive
+                      ? "bg-sky-100 border-l-4 border-l-blue-500 text-blue-800 font-semibold"
+                      : "hover:bg-sky-50 text-gray-700"
+                  }`}
+                  onClick={() => handleSelectGroup(group.group_id)}
+                >
+                  <div className="w-10 h-10 rounded-full bg-gray-200 shrink-0" />
+                  <span className="text-sm font-medium truncate">
+                    {group.group_name}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </aside>
+
+        {/* Right column: chat window */}
+        <div className="flex-1 flex flex-col min-w-0 bg-gray-50">
+          <div className="px-6 py-3 border-b border-gray-200 bg-white">
+            <div className="text-lg font-semibold text-gray-800 truncate">
+              {selectedGroup.group_name}
+            </div>
+          </div>
+
+          <ChatArea
+            group={selectedGroup}
+            messages={messages}
+            currentUser={currentUser}
+            onSendMessage={handleSendMessage}
+            loadingMessages={loadingMessages}
+          />
+        </div>
+      </div>
+    </div>
   );
 };
 

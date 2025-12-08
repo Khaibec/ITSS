@@ -4,7 +4,13 @@ import MessageInput from "./MessageInput";
 import ExplainModal from "./ExplainModal";
 import { chatAPI } from "../../services/api";
 
-const ChatArea = ({ group, messages, currentUser, onSendMessage, loadingMessages }) => {
+const ChatArea = ({
+  group,
+  messages,
+  currentUser,
+  onSendMessage,
+  loadingMessages,
+}) => {
   // State quản lý modal AI explain
   const [isExplainOpen, setIsExplainOpen] = useState(false);
   const [currentMessage, setCurrentMessage] = useState("");
@@ -64,12 +70,6 @@ const ChatArea = ({ group, messages, currentUser, onSendMessage, loadingMessages
 
   return (
     <div className="flex-1 flex flex-col bg-gray-50 overflow-hidden">
-      <div className="bg-gray-300 px-6 py-4 border-b border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-800">
-          {group.group_name}
-        </h2>
-      </div>
-
       <div className="relative flex-1 overflow-y-auto">
 
         {loadingMessages ? (
