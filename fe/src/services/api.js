@@ -188,3 +188,21 @@ export const groupsAPI = {
     });
   },
 };
+
+export const aiReviewAPI = {
+  reviewMessage: async (content) => {
+    return await apiRequest('/ai/review', {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    });
+  },
+};
+
+export const diariesAPI = {
+  saveEntry: async (payload) => {
+    return await apiRequest('/diaries', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+};

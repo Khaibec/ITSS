@@ -23,6 +23,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:push": "prisma db push",
+    "prisma:seed": "prisma db seed",
     "test:messages": "ts-node scripts/test-messages-endpoint.ts"
   },
   "prisma": {

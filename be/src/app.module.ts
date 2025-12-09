@@ -8,10 +8,11 @@ import { ChatBoxesModule } from './chat-boxes/chat-boxes.module';
 import { AIModule } from './ai/ai.module';
 import { GroupsModule } from './groups/groups.module';
 import { UsersModule } from './users/users.module';
+import { DiariesModule } from './diaries/diaries.module';
 
 @Module({
-  imports: [AuthModule, PrismaModule, ChatModule, ChatBoxesModule, AIModule, GroupsModule, UsersModule],
+  imports: [AuthModule, PrismaModule, ChatModule, ChatBoxesModule, AIModule, GroupsModule, UsersModule, DiariesModule],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

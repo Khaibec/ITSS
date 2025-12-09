@@ -1,15 +1,35 @@
 import { useState } from "react";
+import ReviewModal from "./ReviewModal";
+import { aiReviewAPI } from "../../services/api";
 
 const MessageInput = ({ onSendMessage }) => {
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
 
-  const handleReview = () => {
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const [reviewResult, setReviewResult] = useState(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+
+  const handleReview = async () => {
     if (!message.trim()) {
       alert("メッセージを入力してください");
       return;
     }
-    alert("Chức năng đang phát triển\nSẽ được thêm ở sprint sau");
+
+    setIsReviewOpen(true);
+    setReviewLoading(true);
+    setReviewResult(null);
+
+    try {
+      const result = await aiReviewAPI.reviewMessage(message);
+      setReviewResult(result);
+    } catch (error) {
+      console.error(error);
+      alert("Review failed");
+      setIsReviewOpen(false);
+    } finally {
+      setReviewLoading(false);
+    }
   };
 
   const handleSend = () => {
@@ -107,6 +127,13 @@ const MessageInput = ({ onSendMessage }) => {
           </svg>
         </button>
       </div>
+      <ReviewModal
+        open={isReviewOpen}
+        message={message}
+        reviewResult={reviewResult}
+        loading={reviewLoading}
+        onClose={() => setIsReviewOpen(false)}
+      />
     </div>
   );
 };

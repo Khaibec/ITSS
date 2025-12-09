@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { AIService } from './ai.service';
+import { AIController } from './ai.controller';
 
 @Module({
   imports: [
@@ -15,7 +16,8 @@ import { AIService } from './ai.service';
     }),
   ],
 
+  controllers: [AIController],
   providers: [AIService],
-  exports: [AIService], // Cho phép ChatService hoặc Gateway dùng AIService
+  exports: [AIService],
 })
-export class AIModule {}
+export class AIModule { }
