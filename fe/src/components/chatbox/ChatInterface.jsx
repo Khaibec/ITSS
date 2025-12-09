@@ -136,6 +136,15 @@ const ChatInterface = () => {
         );
         if (messagesResponse.success && messagesResponse.data) {
           setMessages(messagesResponse.data);
+          
+          // Mark all messages as read after loading
+          try {
+            await chatBoxesAPI.markAsRead(parseInt(groupId));
+            console.log("[ChatInterface] Messages marked as read");
+          } catch (markReadError) {
+            console.error("[ChatInterface] Failed to mark messages as read:", markReadError);
+            // Don't block UI if mark as read fails
+          }
         } else {
           console.error("Failed to load messages");
         }

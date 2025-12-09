@@ -176,5 +176,79 @@ IMPORTANT:
     }
   }
 
-  
+  /**
+   * Đánh dấu tất cả tin nhắn trong một nhóm là đã đọc bởi user
+   * @param groupId ID của nhóm chat
+   * @param userId ID của user đang xem
+   * @returns Số lượng tin nhắn đã được đánh dấu là đã đọc
+   */
+  async markMessagesAsRead(groupId: number, userId: number): Promise<number> {
+    try {
+      // Kiểm tra group có tồn tại không
+      const group = await this.prisma.chat_groups.findUnique({
+        where: { group_id: groupId },
+      });
+      if (!group) {
+        throw new NotFoundException(`Chat group with ID ${groupId} not found`);
+      }
+
+      // Lấy tất cả message IDs trong group mà user chưa đọc
+      const unreadMessages = await this.prisma.messages.findMany({
+        where: {
+          group_id: groupId,
+        },
+        select: {
+          message_id: true,
+        },
+      });
+
+      if (unreadMessages.length === 0) {
+        this.logger.log(`No messages to mark as read for user ${userId} in group ${groupId}`);
+        return 0;
+      }
+
+      const messageIds = unreadMessages.map((msg) => msg.message_id);
+
+      // Lấy danh sách message IDs đã được đọc rồi
+      const alreadyRead = await this.prisma.message_reads.findMany({
+        where: {
+          user_id: userId,
+          message_id: { in: messageIds },
+        },
+        select: {
+          message_id: true,
+        },
+      });
+
+      const alreadyReadIds = new Set(alreadyRead.map((r) => r.message_id));
+
+      // Chỉ đánh dấu những message chưa đọc
+      const toMarkAsRead = messageIds.filter((id) => !alreadyReadIds.has(id));
+
+      if (toMarkAsRead.length === 0) {
+        this.logger.log(`All messages already read for user ${userId} in group ${groupId}`);
+        return 0;
+      }
+
+      // Tạo các record trong message_reads
+      await this.prisma.message_reads.createMany({
+        data: toMarkAsRead.map((messageId) => ({
+          message_id: messageId,
+          user_id: userId,
+        })),
+        skipDuplicates: true, // Tránh lỗi nếu có duplicate
+      });
+
+      this.logger.log(
+        `Marked ${toMarkAsRead.length} messages as read for user ${userId} in group ${groupId}`,
+      );
+
+      return toMarkAsRead.length;
+    } catch (error) {
+      this.logger.error(
+        `Failed to mark messages as read for user ${userId} in group ${groupId}: ${error.message}`,
+      );
+      throw error;
+    }
+  }
 }

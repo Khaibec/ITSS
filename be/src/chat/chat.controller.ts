@@ -86,4 +86,37 @@ export class ChatController {
       throw error;
     }
   }
+
+  /**
+   * API để đánh dấu tất cả tin nhắn trong một nhóm là đã đọc.
+   * POST /messages/group/:groupId/mark-read
+   * @param groupId ID của nhóm chat
+   * @param req Request object chứa thông tin người dùng đã xác thực
+   * @returns Số lượng tin nhắn đã được đánh dấu là đã đọc
+   */
+  @Post('group/:groupId/mark-read')
+  async markMessagesAsRead(
+    @Param('groupId', ParseIntPipe) groupId: number,
+    @Req() req: authenticatedRequestInterface.AuthenticatedRequest,
+  ) {
+    const userId = req.user.user_id;
+
+    this.logger.log(
+      `User ${userId} requested to mark messages as read in group ${groupId}`,
+    );
+
+    try {
+      const count = await this.chatService.markMessagesAsRead(groupId, userId);
+      return {
+        success: true,
+        message: `Marked ${count} messages as read`,
+        count,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error marking messages as read for user ${userId} in group ${groupId}: ${error.message}`,
+      );
+      throw error;
+    }
+  }
 }

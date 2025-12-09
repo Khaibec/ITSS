@@ -133,6 +133,17 @@ export const chatBoxesAPI = {
       method: 'GET',
     });
   },
+
+  /**
+   * Mark all messages in a group as read
+   * @param {number} groupId - Group ID
+   * @returns {Promise<{success: boolean, message: string, count: number}>}
+   */
+  markAsRead: async (groupId) => {
+    return await apiRequest(`/messages/group/${groupId}/mark-read`, {
+      method: 'POST',
+    });
+  },
 };
 
 export const chatAPI = {
