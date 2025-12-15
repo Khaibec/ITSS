@@ -9,9 +9,15 @@ export class AIController {
 
     @Post('review')
     @UseGuards(AuthGuard('jwt'))
-    async review(@Body('content') content: string, @Req() req: any) {
+    async review(
+        @Body('content') content: string,
+        @Body('groupId') groupId: number | undefined,
+        @Req() req: any
+    ) {
         // req.user has user_id, email, etc., including nationality if fetched in Strategy
         const userNationality = req.user?.nationality || 'VN'; // Default to VN if missing
-        return this.aiService.reviewMessage(content, userNationality);
+        const userId = req.user?.user_id;
+
+        return this.aiService.reviewMessage(content, userNationality, userId, groupId);
     }
 }

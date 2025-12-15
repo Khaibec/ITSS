@@ -179,10 +179,10 @@ export const groupsAPI = {
 };
 
 export const aiReviewAPI = {
-  reviewMessage: async (content) => {
+  reviewMessage: async (content, groupId) => {
     return await apiRequest('/ai/review', {
       method: 'POST',
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ content, groupId }),
     });
   },
 };

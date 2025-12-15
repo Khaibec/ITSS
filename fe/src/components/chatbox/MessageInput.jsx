@@ -2,7 +2,7 @@ import { useState } from "react";
 import ReviewModal from "./ReviewModal";
 import { aiReviewAPI } from "../../services/api";
 
-const MessageInput = ({ onSendMessage }) => {
+const MessageInput = ({ onSendMessage, groupId }) => {
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
 
@@ -21,7 +21,7 @@ const MessageInput = ({ onSendMessage }) => {
     setReviewResult(null);
 
     try {
-      const result = await aiReviewAPI.reviewMessage(message);
+      const result = await aiReviewAPI.reviewMessage(message, groupId);
       setReviewResult(result);
     } catch (error) {
       console.error(error);

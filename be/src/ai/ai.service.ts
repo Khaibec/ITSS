@@ -1,12 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AIService {
   private readonly logger = new Logger(AIService.name);
+  private reviewCache = new Map<string, any>(); // Simple in-memory cache
 
-  constructor(private readonly http: HttpService) { }
+  constructor(
+    private readonly http: HttpService,
+    private readonly prisma: PrismaService
+  ) { }
 
   async explain(message: string): Promise<string> {
     // Lấy API Key ở ngoài khối try để dùng được trong cả catch
@@ -24,9 +29,9 @@ export class AIService {
     // List of models to try in order
     const modelsToTry = [
       primaryModel, // Primary from env
-      "gemini-2.5-flash",
-      "gemini-2.5-pro",
       "gemini-1.5-flash",
+      "gemini-2.0-flash-exp",
+      "gemini-1.5-pro",
     ];
     // Remove duplicates and empty strings
     const uniqueModels = [...new Set(modelsToTry)].filter(m => m);
@@ -96,38 +101,68 @@ export class AIService {
     }
   }
 
-  async reviewMessage(message: string, userLanguage: string = 'en'): Promise<any> {
+  async reviewMessage(message: string, userLanguage: string = 'en', userId?: number, groupId?: number): Promise<any> {
+    // 1. Check Cache
+    const cacheKey = userId ? `${userId}:${message.trim()}` : null;
+    if (cacheKey && this.reviewCache.has(cacheKey)) {
+      this.logger.log(`Serving review from cache for user ${userId}`);
+      return this.reviewCache.get(cacheKey);
+    }
+
     const apiKey = (process.env.GOOGLE_STUDIO_API_KEY || '').replace(/['"]+/g, '').trim();
     const model = (process.env.GOOGLE_MODEL_NAME || 'gemini-1.5-flash').replace(/['"]+/g, '').trim();
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-    // Normalize and determining language
+    // Normalize language
     const lang = (userLanguage || '').toUpperCase().trim();
-    let explanationLang = 'English'; // Default
+    let explanationLang = 'English';
+    let suggestionLangRules = '';
 
-    // Explicitly handle Vietnamese cases
-    // Include the default 'VN' from controller, and other variations
+    // Handle Vietnamese cases
     if (['VN', 'VIETNAM', 'VIETNAMESE', 'VI', 'VMI', 'VIET NAM'].includes(lang)) {
       explanationLang = 'Vietnamese';
+      suggestionLangRules = 'However, the "suggestion" field MUST be in accurate, natural JAPANESE (the target language users are learning). The "warning" field should be in Vietnamese.';
     }
-    // Explicitly handle Japanese cases
+    // Handle Japanese cases
     else if (['JP', 'JAPAN', 'JAPANESE', 'JA', 'JPN'].includes(lang)) {
       explanationLang = 'Japanese';
     }
 
+    // 2. Fetch Context (Previous Messages)
+    let contextStr = '';
+    if (groupId) {
+      try {
+        const history = await this.prisma.messages.findMany({
+          where: { group_id: Number(groupId) },
+          orderBy: { created_at: 'desc' },
+          take: 5,
+          include: { sender: { select: { name: true } } }
+        });
+        // Reverse to chronological order
+        contextStr = history.reverse().map(m => `${m.sender?.name || 'User'}: ${m.content}`).join('\n');
+        if (contextStr) {
+          contextStr = `\nContext (Last 5 messages):\n${contextStr}\n---\n`;
+        }
+      } catch (err) {
+        this.logger.warn(`Failed to fetch context for group ${groupId}: ${err.message}`);
+      }
+    }
+
     const prompt = `
-      You are a polite and helpful language assistant.
+      You are a polite and helpful language assistant used in a chat application.
       Analyze the following message for "naturalness" and "risk of misunderstanding" (misinterpretation).
       
-      Message: "${message}"
+      ${contextStr}
+      Target Message to Review: "${message}"
 
-      IMPORTANT: You MUST provide the analysis (Warning and Suggestion) in the ${explanationLang} language, regardless of the language of the input message.
+      IMPORTANT: 
+      1. Provide the analysis (Warning) in the ${explanationLang} language.
+      2. ${suggestionLangRules}
 
       Please return the result in JSON format ONLY, without any markdown code block markers. 
       The JSON structure must be:
       {
-        "warning": "Risk or unnatural points (string, if none, put null or empty string)",
-        "suggestion": "Improved/More natural version (string)"
+        "warning": "Risk or unnatural points (string). If the message is completely natural, put null or empty string.",
+        "suggestion": "Improved/More natural version (string). Must be in the target language (usually Japanese)."
       }
     `;
 
@@ -138,9 +173,9 @@ export class AIService {
     // List of models to try in order
     const modelsToTry = [
       model, // Primary from env
-      "gemini-2.5-flash",
-      "gemini-2.5-pro",
       "gemini-1.5-flash",
+      "gemini-2.0-flash-exp",
+      "gemini-1.5-pro",
     ];
     // Remove duplicates and empty strings
     const uniqueModels = [...new Set(modelsToTry)].filter(m => m);
@@ -153,7 +188,13 @@ export class AIService {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${apiKey}`;
 
         const response = await firstValueFrom(this.http.post(url, body));
-        return this.processResponse(response.data);
+        const result = this.processResponse(response.data);
+
+        // Cache Success Result
+        if (cacheKey && result && result.suggestion !== undefined) {
+          this.reviewCache.set(cacheKey, result);
+        }
+        return result;
 
       } catch (error) {
         const status = error.response?.status;
@@ -164,7 +205,6 @@ export class AIService {
         if ([429, 404, 500, 503].includes(status) || !status) {
           continue;
         } else {
-          // If unauthorized (401) or Bad Request (400), likely a key/prompt issue, so stop.
           break;
         }
       }
