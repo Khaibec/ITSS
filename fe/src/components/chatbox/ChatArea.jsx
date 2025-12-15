@@ -77,10 +77,10 @@ const ChatArea = ({
             <div className="text-gray-600">メッセージを読み込み中...</div>
           </div>
         ) : (
-          <MessageList 
-            messages={messages} 
-            currentUser={currentUser} 
-            onExplain={handleExplain} 
+          <MessageList
+            messages={messages}
+            currentUser={currentUser}
+            onExplain={handleExplain}
           />
         )}
 
@@ -94,7 +94,7 @@ const ChatArea = ({
         />
       </div>
 
-      <MessageInput onSendMessage={onSendMessage} />
+      <MessageInput onSendMessage={onSendMessage} groupId={group?.group_id} />
     </div>
   );
 };
