@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -5,6 +6,7 @@ const SidebarNavigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const [isChatBoxOpen, setIsChatBoxOpen] = useState(false);
 
   const currentPath = location.pathname;
 
@@ -21,14 +23,23 @@ const SidebarNavigation = () => {
     return currentPath === path;
   };
 
+  const toggleChatBox = () => {
+    setIsChatBoxOpen(!isChatBoxOpen);
+  };
+
   return (
     <aside className="w-[280px] bg-white border-r-2 border-gray-300 flex flex-col h-full">
       {/* Chat Box Dropdown */}
       <div className="px-5 py-4 border-b border-gray-200">
-        <div className="flex items-center justify-between cursor-pointer">
+        <div 
+          className="flex items-center justify-between cursor-pointer"
+          onClick={toggleChatBox}
+        >
           <span className="text-base font-semibold text-gray-800">チャットボックス</span>
           <svg
-            className="w-5 h-5 text-gray-600"
+            className={`w-5 h-5 text-gray-600 transition-transform duration-200 ${
+              isChatBoxOpen ? "rotate-180" : ""
+            }`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -43,44 +54,50 @@ const SidebarNavigation = () => {
         </div>
       </div>
 
-      {/* Menu Items */}
+      {/* Menu Items - Collapsible */}
       <div className="flex-1">
         <div
-          className={`px-5 py-3 cursor-pointer transition-colors ${
-            isActive("/chatbox/groups")
-              ? "bg-gray-100 text-gray-900 font-semibold"
-              : "text-gray-700 hover:bg-gray-50"
+          className={`overflow-hidden transition-all duration-300 ease-in-out ${
+            isChatBoxOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
           }`}
-          onClick={() => navigate("/chatbox/groups")}
         >
-          グループ一覧
-        </div>
+          <div
+            className={`px-5 py-3 cursor-pointer transition-colors ${
+              isActive("/chatbox/groups")
+                ? "bg-gray-100 text-gray-900 font-normal"
+                : "text-gray-700 hover:bg-gray-50 font-normal"
+            }`}
+            onClick={() => navigate("/chatbox/groups")}
+          >
+            グループ一覧
+          </div>
 
-        <div
-          className={`px-5 py-3 cursor-pointer transition-colors ${
-            isActive("/chatbox/create-group")
-              ? "bg-gray-100 text-gray-900 font-semibold"
-              : "text-gray-700 hover:bg-gray-50"
-          }`}
-          onClick={() => navigate("/chatbox/create-group")}
-        >
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-full bg-gray-300 flex items-center justify-center">
-              <svg
-                className="w-3 h-3 text-gray-700"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
+          <div
+            className={`px-5 py-3 cursor-pointer transition-colors ${
+              isActive("/chatbox/create-group")
+                ? "bg-gray-100 text-gray-900 font-semibold"
+                : "text-gray-700 hover:bg-gray-50"
+            }`}
+            onClick={() => navigate("/chatbox/create-group")}
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-full bg-gray-300 flex items-center justify-center">
+                <svg
+                  className="w-3 h-3 text-gray-700"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+              </div>
+              <span>グループを作成</span>
             </div>
-            <span>グループを作成</span>
           </div>
         </div>
 

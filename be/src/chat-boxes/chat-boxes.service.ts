@@ -46,9 +46,16 @@ export class ChatBoxesService {
           const latestMessage = group.messages[0] || null;
 
           // Count unread messages (messages without corresponding message_reads for this user)
-          // More efficient: count total messages and subtract read messages
+          // Exclude messages sent by the user themselves - they shouldn't count as unread
+          // More efficient: count total messages (excluding user's own messages) and subtract read messages
           const totalMessages = await this.prisma.messages.count({
-            where: { group_id: group.group_id },
+            where: { 
+              group_id: group.group_id,
+              AND: [
+                { sender_id: { not: null } }, // Only count messages with a sender
+                { sender_id: { not: userId } }, // Exclude messages sent by the current user
+              ],
+            },
           });
 
           const readMessages = await this.prisma.message_reads.count({
@@ -56,6 +63,10 @@ export class ChatBoxesService {
               user_id: userId,
               message: {
                 group_id: group.group_id,
+                AND: [
+                  { sender_id: { not: null } }, // Only count messages with a sender
+                  { sender_id: { not: userId } }, // Only count messages from others as read
+                ],
               },
             },
           });
