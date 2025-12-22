@@ -19,16 +19,21 @@ const MessageItem = ({ message, isOwnMessage, onExplain }) => {
   const getAvatarUrl = (sender) => {
     if (sender?.avatar) return sender.avatar;
     if (sender?.name) {
-      return `https://ui-avatars.com/api/?name=${encodeURIComponent(sender.name)}&background=4F46E5&color=fff`;
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(
+        sender.name
+      )}&background=4F46E5&color=fff`;
     }
     if (sender?.email) {
-      const name = sender.email.split('@')[0];
-      return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=4F46E5&color=fff`;
+      const name = sender.email.split("@")[0];
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(
+        name
+      )}&background=4F46E5&color=fff`;
     }
     return `https://ui-avatars.com/api/?name=User&background=gray&color=fff`;
   };
 
-  const senderName = message.sender?.name || message.sender?.email || 'Unknown User';
+  const senderName =
+    message.sender?.name || message.sender?.email || "Unknown User";
   const avatarUrl = getAvatarUrl(message.sender);
 
   return (
@@ -51,9 +56,7 @@ const MessageItem = ({ message, isOwnMessage, onExplain }) => {
         `}
       >
         {!isOwnMessage && (
-          <div className="text-xs text-gray-500 mb-1 pl-3">
-            {senderName}
-          </div>
+          <div className="text-xs text-gray-500 mb-1 pl-3">{senderName}</div>
         )}
 
         <div
@@ -78,19 +81,21 @@ const MessageItem = ({ message, isOwnMessage, onExplain }) => {
             </div>
           </div>
 
-          <button
-            className="
-              w-7 h-7 rounded-full border border-gray-300 bg-white
-              text-gray-500 text-sm font-bold
-              flex items-center justify-center shrink-0 cursor-pointer
-              transition-all hover:bg-gray-100 hover:border-gray-400 hover:text-gray-700 hover:scale-110
-              active:scale-95
-            "
-            onClick={handleAnalysisClick}
-            title="メッセージを分析"
-          >
-            ?
-          </button>
+          {!isOwnMessage && (
+            <button
+              className="
+                w-7 h-7 rounded-full border border-gray-300 bg-white
+                text-gray-500 text-sm font-bold
+                flex items-center justify-center shrink-0 cursor-pointer
+                transition-all hover:bg-gray-100 hover:border-gray-400 hover:text-gray-700 hover:scale-110
+                active:scale-95
+              "
+              onClick={handleAnalysisClick}
+              title="メッセージを分析"
+            >
+              ?
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -98,4 +103,3 @@ const MessageItem = ({ message, isOwnMessage, onExplain }) => {
 };
 
 export default MessageItem;
-
