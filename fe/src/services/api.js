@@ -205,6 +205,18 @@ export const diariesAPI = {
       body: JSON.stringify(payload),
     });
   },
+  // danh sách nhật ký
+  getList: async () => {
+    return await apiRequest('/diaries', {
+      method: 'GET',
+    });
+  },
+  // chi tiết nhật ký
+  getById: async (diaryId) => {
+    return await apiRequest(`/diaries/${diaryId}` , {
+      method: 'GET',
+    });
+  },
 };
 
 export const saveDiaryAPI = {

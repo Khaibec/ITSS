@@ -6,4 +6,6 @@ export { default as ChatArea } from "./ChatArea";
 export { default as MessageList } from "./MessageList";
 export { default as MessageItem } from "./MessageItem";
 export { default as MessageInput } from "./MessageInput";
+export { default as DiaryList } from "./DiaryList";
+export { default as DiaryDetail } from "./DiaryDetail";
 

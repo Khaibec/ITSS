@@ -3,6 +3,8 @@ import MainLayout from "./components/chatbox/MainLayout";
 import GroupListDashboard from "./components/chatbox/GroupListDashboard";
 import CreateGroup from "./components/chatbox/CreateGroup";
 import ChatInterface from "./components/chatbox/ChatInterface";
+import DiaryList from "./components/chatbox/DiaryList";
+import DiaryDetail from "./components/chatbox/DiaryDetail";
 import Login from "./components/auth/Login";
 import Signup from "./components/auth/Signup";
 import { Routes, Route, Navigate } from "react-router-dom";
@@ -58,6 +60,30 @@ function AppContent() {
         element={
           isAuthenticated ? (
             <ChatInterface />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/chatbox/diary"
+        element={
+          isAuthenticated ? (
+            <MainLayout>
+              <DiaryList />
+            </MainLayout>
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/chatbox/diary/:diaryId"
+        element={
+          isAuthenticated ? (
+            <MainLayout>
+              <DiaryDetail />
+            </MainLayout>
           ) : (
             <Navigate to="/login" replace />
           )
