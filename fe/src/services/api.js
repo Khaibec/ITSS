@@ -206,3 +206,12 @@ export const diariesAPI = {
     });
   },
 };
+
+export const saveDiaryAPI = {
+  saveLearningDiary: async ({ message, groupId }) => {
+    return apiRequest('/ai/save-learning-diary', {
+      method: 'POST',
+      body: JSON.stringify({ message, groupId }),
+    });
+  },
+};

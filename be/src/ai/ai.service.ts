@@ -28,10 +28,7 @@ export class AIService {
 
     // List of models to try in order
     const modelsToTry = [
-      primaryModel, // Primary from env
-      "gemini-1.5-flash",
-      "gemini-2.0-flash-exp",
-      "gemini-1.5-pro",
+      primaryModel
     ];
     // Remove duplicates and empty strings
     const uniqueModels = [...new Set(modelsToTry)].filter(m => m);
@@ -110,7 +107,7 @@ export class AIService {
     }
 
     const apiKey = (process.env.GOOGLE_STUDIO_API_KEY || '').replace(/['"]+/g, '').trim();
-    const model = (process.env.GOOGLE_MODEL_NAME || 'gemini-1.5-flash').replace(/['"]+/g, '').trim();
+    const model = (process.env.GOOGLE_MODEL_NAME || 'gemini-2.5-flash').replace(/['"]+/g, '').trim();
 
     // Normalize language
     const lang = (userLanguage || '').toUpperCase().trim();
