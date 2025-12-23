@@ -37,10 +37,13 @@ export const AuthProvider = ({ children }) => {
             removeToken();
             setIsAuthenticated(false);
           }
+        } finally {
+          setLoading(false);
         }
       })();
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   const login = async ({ email, password }) => {
