@@ -36,9 +36,10 @@ const ChatLayout = () => {
       },
       (error) => {
         console.error("[ChatLayout] Socket error:", error);
-        if (error.message?.includes("Authentication")) {
-          logout();
-        }
+        // Do not auto-logout on socket error to prevent accidental logouts
+        // if (error.message?.includes("Authentication")) {
+        //   logout();
+        // }
       }
     );
 

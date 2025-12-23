@@ -47,9 +47,10 @@ const ChatInterface = () => {
       },
       (error) => {
         console.error("[ChatInterface] Socket error:", error);
-        if (error.message?.includes("Authentication")) {
-          logout();
-        }
+        // Do not auto-logout on socket error to prevent accidental logouts
+        // if (error.message?.includes("Authentication")) {
+        //   logout();
+        // }
       }
     );
 
@@ -234,6 +235,28 @@ const ChatInterface = () => {
     );
   }
 
+  // Function to generate initials from group name
+  const getInitials = (name) => {
+    if (!name) return "G";
+    return name.substring(0, 1).toUpperCase();
+  };
+
+  // Function to generate a consistent color based on string
+  const getBackgroundColor = (str) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const colors = [
+      "#ef4444", "#f97316", "#f59e0b", 
+      "#22c55e", "#10b981", "#14b8a6",
+      "#06b6d4", "#0ea5e9", "#3b82f6", 
+      "#6366f1", "#8b5cf6", "#a855f7", 
+      "#d946ef", "#ec4899", "#f43f5e"
+    ];
+    return colors[Math.abs(hash) % colors.length];
+  };
+
   return (
     <div className="flex flex-col h-screen bg-white">
       {/* Header with logo and back button */}
@@ -272,6 +295,9 @@ const ChatInterface = () => {
           <div className="flex-1 overflow-y-auto scrollbar-thin">
             {chatBoxes.map((group) => {
               const isActive = group.group_id === parseInt(groupId);
+              const hasImage = group.icon_url && group.icon_url.trim() !== "" && !group.icon_url.includes("ui-avatars.com");
+              const bgColor = getBackgroundColor(group.group_name || "");
+
               return (
                 <div
                   key={group.group_id}
@@ -282,7 +308,38 @@ const ChatInterface = () => {
                   }`}
                   onClick={() => handleSelectGroup(group.group_id)}
                 >
-                  <div className="w-10 h-10 rounded-full bg-gray-200 shrink-0" />
+                  {hasImage ? (
+                    <img
+                      src={group.icon_url}
+                      alt={group.group_name}
+                      className="w-10 h-10 rounded-full object-cover shrink-0 border-2 border-gray-100 bg-gray-50"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        const nextSibling = e.target.nextElementSibling;
+                        if (nextSibling) {
+                           nextSibling.style.display = 'flex';
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div 
+                      className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center text-white text-base font-bold shadow-sm"
+                      style={{ backgroundColor: bgColor }}
+                    >
+                      {getInitials(group.group_name)}
+                    </div>
+                  )}
+
+                  {/* Fallback div */}
+                  {hasImage && (
+                    <div 
+                      className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center text-white text-base font-bold shadow-sm"
+                      style={{ display: 'none', backgroundColor: bgColor }}
+                    >
+                      {getInitials(group.group_name)}
+                    </div>
+                  )}
+
                   <span className="text-sm font-medium truncate">
                     {group.group_name}
                   </span>
