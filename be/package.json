@@ -24,6 +24,7 @@
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:push": "prisma db push",
     "prisma:seed": "prisma db seed",
+    "seed": "ts-node prisma/seed.ts",
     "test:messages": "ts-node scripts/test-messages-endpoint.ts"
   },
   "prisma": {
@@ -57,7 +58,7 @@
     "@nestjs/testing": "^11.0.1",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
-    "@types/node": "^22.10.7",
+    "@types/node": "^22.19.3",
     "@types/socket.io": "^3.0.1",
     "@types/supertest": "^6.0.2",
     "eslint": "^9.18.0",
