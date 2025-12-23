@@ -16,14 +16,27 @@ const ExplainModal = ({
 
   if (!open) return null;
 
-  const handleSave = async () => {
+  // Step 1: ask confirm
+  const handleAskSave = () => {
+    setToast({
+      type: 'confirm',
+      message: 'この内容を学習日記に保存しますか？',
+    });
+  };
+
+  // Step 2: confirm save
+  const handleConfirmSave = async () => {
     if (saving) return;
 
     setSaving(true);
     try {
       await saveDiaryAPI.saveLearningDiary({ message, groupId });
-      setToast({ type: 'success', message: '学習日記に保存しました 🌱' });
+      setToast({
+        type: 'success',
+        message: '学習日記に保存しました 🌱',
+      });
     } catch (err) {
+      console.log(err);
       setToast({
         type: 'error',
         message:
@@ -42,28 +55,22 @@ const ExplainModal = ({
         <Toast
           type={toast.type}
           message={toast.message}
+          loading={saving}
+          onConfirm={handleConfirmSave}
           onClose={() => setToast(null)}
         />
       )}
 
       {/* Overlay */}
-      <div
-        className="
-          fixed inset-0
-          backdrop-blur-sm
-          bg-black/20
-          flex items-center justify-center
-          z-50
-        "
-      >
-        {/* MAIN POPUP */}
+      <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center z-50">
+        {/* MAIN MODAL */}
         <div className="relative bg-yellow-100 w-[600px] min-h-[280px] rounded-lg shadow-lg p-6">
 
           {/* Block UI while saving */}
           {saving && (
-            <div className="absolute inset-0 bg-white/70 z-50 flex items-center justify-center rounded-lg">
+            <div className="absolute inset-0 bg-white/70 z-40 flex items-center justify-center rounded-lg">
               <div className="text-gray-700 animate-pulse">
-                AI が分析中です…
+                保存中です…
               </div>
             </div>
           )}
@@ -103,7 +110,7 @@ const ExplainModal = ({
             </div>
           )}
 
-          {/* Original */}
+          {/* Original message */}
           <div className="text-sm text-gray-700 border p-3 rounded-md bg-white mb-4">
             <strong>原文:</strong>
             <div className="mt-1 whitespace-pre-wrap">{message}</div>
@@ -121,7 +128,7 @@ const ExplainModal = ({
           {/* Save */}
           <div className="flex justify-end">
             <button
-              onClick={handleSave}
+              onClick={handleAskSave}
               disabled={saving}
               className="
                 bg-green-500 text-white px-4 py-2

@@ -20,4 +20,23 @@ export class AIController {
 
         return this.aiService.reviewMessage(content, userNationality, userId, groupId);
     }
+
+    @Post('save-learning-diary')
+    @UseGuards(AuthGuard('jwt'))
+    async saveLearningDiary(
+    @Body('message') message: string,
+    @Body('groupId') groupId: number | undefined,
+    @Req() req: any,
+    ) {
+    const userId = req.user.user_id;
+    const nationality = req.user?.nationality || 'VN';
+
+    return this.aiService.extractAndSaveLearningDiary(
+        message,
+        nationality,
+        userId,
+        groupId,
+    );
+    }
+
 }

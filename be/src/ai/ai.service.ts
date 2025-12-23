@@ -28,7 +28,10 @@ export class AIService {
 
     // List of models to try in order
     const modelsToTry = [
-      primaryModel
+      primaryModel, // Primary from env
+      "gemini-1.5-flash",
+      "gemini-2.0-flash-exp",
+      "gemini-1.5-pro",
     ];
     // Remove duplicates and empty strings
     const uniqueModels = [...new Set(modelsToTry)].filter(m => m);
@@ -228,6 +231,148 @@ export class AIService {
     } catch (e) {
       return { warning: null, suggestion: text }; // Fallback
     }
+  }
+
+  async extractAndSaveLearningDiary(
+    message: string,
+    nationality: string,
+    userId: number,
+    groupId?: number,
+  ): Promise<{
+    message: string;
+    diary: {
+      diary_id: number;
+      title: string | null;
+      situation: string | null;
+      learning_content: string | null;
+      learning_date: Date;
+    };
+  }> {
+    const apiKey = (process.env.GOOGLE_STUDIO_API_KEY || '')
+      .replace(/['"]+/g, '')
+      .trim();
+
+    const model = (process.env.GOOGLE_MODEL_NAME || 'gemini-2.5-flash')
+      .replace(/['"]+/g, '')
+      .trim();
+
+    if (!apiKey) throw new Error('Missing GOOGLE_STUDIO_API_KEY');
+
+
+    const lang = (nationality || '').toUpperCase().trim();
+    let explanationLang = 'English';
+    let targetLangHint = 'Japanese';
+
+    if (['VN', 'VI', 'VIETNAM', 'VIETNAMESE', 'VIET NAM'].includes(lang)) {
+      explanationLang = 'Vietnamese';
+      targetLangHint = 'Japanese';
+    } else if (['JP', 'JA', 'JPN', 'JAPAN', 'JAPANESE'].includes(lang)) {
+      explanationLang = 'Japanese';
+      targetLangHint = 'Japanese';
+    }
+
+
+    let contextStr = '';
+    if (groupId) {
+      try {
+        const history = await this.prisma.messages.findMany({
+          where: { group_id: Number(groupId) },
+          orderBy: { created_at: 'desc' },
+          take: 5,
+          include: { sender: { select: { name: true } } },
+        });
+
+        contextStr = history
+          .reverse()
+          .map(m => `${m.sender?.name || 'User'}: ${m.content}`)
+          .join('\n');
+
+        if (contextStr)
+          contextStr = `\nContext (last 5 messages):\n${contextStr}\n---\n`;
+      } catch (err) {
+        this.logger.warn(
+          `Failed to fetch context for diary extract: ${err.message}`,
+        );
+      }
+    }
+
+
+    const prompt = `
+You are a language learning assistant.
+
+Extract a LEARNING DIARY entry from the following message:
+
+${contextStr}
+Target message:
+"${message}"
+
+Rules:
+- Title: short, clear, suitable for list display.
+- Situation: describe the situation in first-person ("Khi tôi...").
+- Learning content:
+  - Explain the problem
+  - Give correct / incorrect short examples
+  - Clear and educational
+- Explanation language: ${explanationLang}
+- Examples must be in ${targetLangHint}.
+- Return JSON ONLY, no markdown.
+
+JSON schema:
+{
+  "title": string,
+  "situation": string,
+  "learning_content": string
+}
+`;
+
+    const body = { contents: [{ parts: [{ text: prompt }] }] };
+
+
+    let aiText: string | null = null;
+
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const response = await firstValueFrom(this.http.post(url, body));
+      aiText = this.extractText(response.data);
+    } catch (err) {
+      this.logger.error(`[Diary AI] Model ${model} failed: ${err.message}`);
+      throw new Error('AI extract failed');
+    }
+
+    if (!aiText) {
+      this.logger.error('AI returned empty response');
+      throw new Error('AI extract failed');
+    }
+
+
+    let parsed: { title?: string; situation?: string; learning_content?: string };
+    try {
+      parsed = JSON.parse(aiText.replace(/```json/g, '').replace(/```/g, '').trim());
+    } catch {
+      this.logger.error('Invalid JSON from AI', aiText);
+      throw new Error('AI returned invalid JSON');
+    }
+
+    const diary = await this.prisma.learning_diaries.create({
+      data: {
+        user_id: userId,
+        title: parsed.title || '学習メモ',
+        situation: parsed.situation || null,
+        learning_content: parsed.learning_content || null,
+        learning_date: new Date(),
+      },
+    });
+
+    return {
+      message: '保存に成功しました',
+      diary: {
+        diary_id: diary.diary_id,
+        title: diary.title,
+        situation: diary.situation,
+        learning_content: diary.learning_content,
+        learning_date: diary.learning_date,
+      },
+    };
   }
 }
 
