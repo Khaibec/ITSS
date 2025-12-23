@@ -15,6 +15,7 @@ npm run start:dev
 **Terminal 2 - Frontend:**
 ```powershell
 cd C:\Users\Admin\Desktop\ITSS-JP-7\ITSS\fe
+npm install react-markdown
 npm run dev
 ```
 
