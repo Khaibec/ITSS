@@ -10,7 +10,7 @@ const Signup = () => {
     name: "",
     nationality: "Vietnam",
     email: "",
-    password: ""
+    password: "",
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -30,7 +30,8 @@ const Signup = () => {
       alert("登録が完了しました。ログインしてください。");
       navigate("/login");
     } catch (err) {
-      const msg = err?.response?.data?.message || err?.message || "Registration failed";
+      const msg =
+        err?.response?.data?.message || err?.message || "Registration failed";
       setError(msg);
     } finally {
       setIsLoading(false);
@@ -48,13 +49,17 @@ const Signup = () => {
 
       <div className="flex-1 flex justify-center items-center pt-20 px-5">
         <div className="bg-white p-10 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.15)] w-full max-w-[600px] text-center">
-          <h2 className="text-[26px] text-primary font-bold mb-8">アカウントを作成</h2>
+          <h2 className="text-[26px] text-primary font-bold mb-8">
+            アカウントを作成
+          </h2>
 
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-left">
               {/* Name */}
               <div className="mb-4">
-                <label className="block mb-1.5 font-semibold text-sm text-gray-800">名前</label>
+                <label className="block mb-1.5 font-semibold text-sm text-gray-800">
+                  名前
+                </label>
                 <input
                   type="text"
                   name="name"
@@ -68,7 +73,9 @@ const Signup = () => {
 
               {/* Email */}
               <div className="mb-4">
-                <label className="block mb-1.5 font-semibold text-sm text-gray-800">メール</label>
+                <label className="block mb-1.5 font-semibold text-sm text-gray-800">
+                  メール
+                </label>
                 <input
                   type="email"
                   name="email"
@@ -80,25 +87,27 @@ const Signup = () => {
                 />
               </div>
 
-            
               {/* Nationality */}
               <div className="mb-4">
-                <label className="block mb-1.5 font-semibold text-sm text-gray-800">国籍</label>
+                <label className="block mb-1.5 font-semibold text-sm text-gray-800">
+                  国籍
+                </label>
                 <select
                   name="nationality"
                   className="w-full p-3.5 border border-transparent rounded-full bg-sky-50 text-[15px] focus:border-sky-400 focus:outline-none"
                   value={formData.nationality}
                   onChange={handleChange}
                 >
-                  <option value="Vietnam">Vietnam</option>
-                  <option value="Japan">Japan</option>
+                  <option value="Vietnam">ベトナム</option>
+                  <option value="Japan">日本</option>
                 </select>
               </div>
 
-
               {/* Password */}
               <div className="mb-4">
-                <label className="block mb-1.5 font-semibold text-sm text-gray-800">パスワード</label>
+                <label className="block mb-1.5 font-semibold text-sm text-gray-800">
+                  パスワード
+                </label>
                 <input
                   type="password"
                   name="password"
@@ -113,8 +122,8 @@ const Signup = () => {
 
             {error && <p className="text-red-500 text-xs mb-4">{error}</p>}
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={isLoading}
               className="w-full bg-sky-500 text-white p-3.5 rounded-md font-bold text-base mt-5 mb-5 hover:bg-sky-600 transition-colors disabled:opacity-70"
             >
@@ -129,7 +138,7 @@ const Signup = () => {
               onClick={() => navigate("/login")}
               className="text-sky-600 font-bold ml-1 hover:underline"
             >
-               ログイン
+              ログイン
             </button>
           </div>
         </div>

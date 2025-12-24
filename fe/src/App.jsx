@@ -5,6 +5,7 @@ import CreateGroup from "./components/chatbox/CreateGroup";
 import ChatInterface from "./components/chatbox/ChatInterface";
 import DiaryList from "./components/chatbox/DiaryList";
 import DiaryDetail from "./components/chatbox/DiaryDetail";
+import Profile from "./components/chatbox/Profile";
 import Login from "./components/auth/Login";
 import Signup from "./components/auth/Signup";
 import { Routes, Route, Navigate } from "react-router-dom";
@@ -24,11 +25,23 @@ function AppContent() {
     <Routes>
       <Route
         path="/login"
-        element={isAuthenticated ? <Navigate to="/chatbox/groups" replace /> : <Login />}
+        element={
+          isAuthenticated ? (
+            <Navigate to="/chatbox/groups" replace />
+          ) : (
+            <Login />
+          )
+        }
       />
       <Route
         path="/signup"
-        element={isAuthenticated ? <Navigate to="/chatbox/groups" replace /> : <Signup />}
+        element={
+          isAuthenticated ? (
+            <Navigate to="/chatbox/groups" replace />
+          ) : (
+            <Signup />
+          )
+        }
       />
       {/* New routes with MainLayout */}
       <Route
@@ -58,11 +71,7 @@ function AppContent() {
       <Route
         path="/chatbox/groups/:groupId"
         element={
-          isAuthenticated ? (
-            <ChatInterface />
-          ) : (
-            <Navigate to="/login" replace />
-          )
+          isAuthenticated ? <ChatInterface /> : <Navigate to="/login" replace />
         }
       />
       <Route
@@ -89,14 +98,38 @@ function AppContent() {
           )
         }
       />
+      <Route
+        path="/chatbox/profile"
+        element={
+          isAuthenticated ? (
+            <MainLayout>
+              <Profile />
+            </MainLayout>
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
       {/* Legacy route - redirect to new route */}
       <Route
         path="/chatbox"
-        element={isAuthenticated ? <Navigate to="/chatbox/groups" replace /> : <Navigate to="/login" replace />}
+        element={
+          isAuthenticated ? (
+            <Navigate to="/chatbox/groups" replace />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
       />
       <Route
         path="/"
-        element={isAuthenticated ? <Navigate to="/chatbox/groups" replace /> : <Navigate to="/login" replace />}
+        element={
+          isAuthenticated ? (
+            <Navigate to="/chatbox/groups" replace />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
       />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
