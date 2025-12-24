@@ -1,162 +1,162 @@
-
 import { useState } from 'react';
-import { diariesAPI } from '../../services/api';
+import Toast from './Toast';
+import { saveDiaryAPI } from '../../services/api';
 
-const ReviewModal = ({ open, message, reviewResult, loading, onClose }) => {
-    if (!open) return null;
+const ReviewModal = ({
+  open,
+  message,
+  reviewResult,
+  loading,
+  onClose,
+  groupId,
+}) => {
+  const [toast, setToast] = useState(null);
+  const [saving, setSaving] = useState(false);
 
-    const [saving, setSaving] = useState(false);
+  if (!open) return null;
 
-    const handleSave = async () => {
-        try {
-            setSaving(true);
-            await diariesAPI.saveEntry({
-                original: message,
-                warning: reviewResult.warning,
-                suggestion: reviewResult.suggestion
-            });
-            alert('学習日記に保存しました！'); // Checkmark success would be better but alert is simple
-            onClose();
-        } catch (err) {
-            console.error(err);
-            alert('保存に失敗しました');
-        } finally {
-            setSaving(false);
-        }
-    };
+  /* Step 1: ask confirm */
+  const handleAskSave = () => {
+    setToast({
+      type: 'confirm',
+      message: 'この内容を学習日記に保存しますか？',
+    });
+  };
 
-    const hasWarning = reviewResult?.warning && reviewResult.warning.length > 0;
+  /* Step 2: confirm save */
+  const handleConfirmSave = async () => {
+    if (saving) return;
 
-    return (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-            {/* Modal Container: Light Yellow Background, Rounded */}
-            <div className="relative bg-[#FFFDE7] w-[560px] min-h-[220px] max-h-[70vh] flex flex-col rounded-3xl shadow-2xl p-6 border-4 border-white ring-4 ring-yellow-100/50">
+    setSaving(true);
+    try {
+      await saveDiaryAPI.saveLearningDiary({
+        message,
+        groupId,
+        warning: reviewResult?.warning,
+        suggestion: reviewResult?.suggestion,
+      });
 
-                {/* Close Button: Top Right, Red Square, White X */}
-                <button
-                    onClick={onClose}
-                    className="
-                        absolute top-4 right-4 
-                        w-10 h-10 
-                        bg-red-500 hover:bg-red-600 
-                        text-white font-bold text-xl
-                        rounded-md shadow-md
-                        flex items-center justify-center
-                        transition-transform hover:scale-105 active:scale-95
-                        z-50
-                    "
-                >
-                    ✕
-                </button>
+      setToast({
+        type: 'success',
+        message: '学習日記に保存しました 🌱',
+      });
+    } catch (err) {
+      setToast({
+        type: 'error',
+        message:
+          err?.response?.data?.message ||
+          '保存に失敗しました。もう一度お試しください。',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
 
-                {/* Content */}
-                {!loading && reviewResult ? (
-                    <div className="mt-4 flex flex-col flex-1 min-h-0 space-y-4">
+  const hasWarning =
+    reviewResult?.warning && reviewResult.warning.length > 0;
 
-                        {/* 1. TOP CARD: Reviewing Message (Fixed) */}
-                        <div className="shrink-0 bg-[#FFCDD2] rounded-3xl p-4 shadow-inner relative">
-                            <div className="bg-white/40 p-3 rounded-xl border border-white/50">
-                                <p className="text-xs text-red-800 font-bold mb-1 uppercase opacity-70">Reviewing Message</p>
-                                <p className="text-gray-900 font-medium text-lg leading-relaxed max-h-[80px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/50">
-                                    {message}
-                                </p>
-                            </div>
-                        </div>
+  return (
+    <>
+      {/* Toast */}
+      {toast && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          loading={saving}
+          onConfirm={handleConfirmSave}
+          onClose={() => setToast(null)}
+        />
+      )}
 
-                        {/* 2. BOTTOM CARD: Results (Scrollable) */}
-                        <div className="
-                            flex-1 min-h-0
-                            bg-[#FFCDD2] 
-                            rounded-3xl 
-                            flex flex-col
-                            text-left
-                            shadow-inner
-                            mb-16 relative
-                            overflow-hidden
-                        ">
-                            {/* SCROLLABLE CONTENT AREA */}
-                            <div className="flex-1 overflow-y-auto pb-20">
+      {/* Overlay (GIỐNG ExplainModal) */}
+      <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center z-50">
+        {/* MAIN MODAL */}
+        <div className="relative bg-yellow-100 w-[600px] min-h-[280px] max-h-[70vh] rounded-lg shadow-lg p-6">
 
-                                {/* Section A: Analysis Result */}
-                                <div className="relative">
-                                    <h3 className="
-                                        text-gray-800 font-bold text-lg 
-                                        sticky top-0 z-20 
-                                        bg-[#FFCDD2]
-                                        pt-6 pb-2 px-6
-                                        border-b-2 border-red-200/50
-                                        w-full
-                                    ">
-                                        Analysis Result
-                                    </h3>
-
-                                    <div className="px-6 py-4">
-                                        {hasWarning ? (
-                                            <div className="text-red-900 font-semibold text-lg mb-3">
-                                                ⚠️ {reviewResult.warning}
-                                            </div>
-                                        ) : (
-                                            <div className="text-green-800 font-semibold text-lg mb-3">
-                                                ✅ 自然な表現です
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Section B: Suggestion */}
-                                {reviewResult.suggestion && (
-                                    <div className="relative border-t-4 border-[#FFFDE7]">
-                                        <h3 className="
-                                            text-gray-800 font-bold text-lg 
-                                            sticky top-0 z-20 
-                                            bg-[#FFCDD2]
-                                            pt-6 pb-2 px-6
-                                            border-b-2 border-red-200/50
-                                            w-full
-                                        ">
-                                            Suggestion
-                                        </h3>
-
-                                        <div className="px-6 py-4">
-                                            <div className="bg-white/60 p-4 rounded-xl w-full text-left shadow-sm">
-                                                <p className="text-gray-900 text-lg whitespace-pre-wrap leading-relaxed">{reviewResult.suggestion}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Save Button: Bottom Right inside Modal (Green) */}
-                        <button
-                            onClick={handleSave}
-                            disabled={saving}
-                            className="
-                                absolute bottom-6 right-6
-                                bg-[#4ADE80] hover:bg-[#22c55e]
-                                text-black font-bold text-lg
-                                px-6 py-2
-                                rounded-full
-                                shadow-lg
-                                transition-all hover:scale-105 active:scale-95
-                                disabled:opacity-70 disabled:grayscale
-                                flex items-center gap-2
-                                z-50
-                            "
-                        >
-                            {saving ? '保存中...' : '学習日記に保存'}
-                        </button>
-
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center justify-center h-60">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-pink-400 mb-4"></div>
-                        <p className="text-pink-600 font-bold text-lg">AIが分析中...</p>
-                    </div>
-                )}
+          {/* Block UI while saving */}
+          {saving && (
+            <div className="absolute inset-0 bg-white/70 z-40 flex items-center justify-center rounded-lg">
+              <div className="text-gray-700 animate-pulse">
+                保存中です…
+              </div>
             </div>
+          )}
+
+          {/* Close */}
+          <button
+            onClick={onClose}
+            disabled={saving}
+            className="
+              absolute top-3 right-3
+              w-7 h-7
+              flex items-center justify-center
+              text-white font-bold
+              bg-red-500 rounded-md
+              hover:bg-red-600 transition
+              disabled:opacity-50
+            "
+          >
+            ×
+          </button>
+
+          {!loading && reviewResult ? (
+            <>
+              {/* Original Message */}
+              <div className="text-sm text-gray-700 border p-3 rounded-md bg-white mb-4">
+                <strong>原文:</strong>
+                <div className="mt-1 whitespace-pre-wrap">{message}</div>
+              </div>
+
+              {/* Analysis Result */}
+              <div className="text-sm bg-white border p-3 rounded-md mb-4">
+                {hasWarning ? (
+                  <div className="text-red-700 font-semibold">
+                    ⚠️ {reviewResult.warning}
+                  </div>
+                ) : (
+                  <div className="text-green-700 font-semibold">
+                    ✅ 自然な表現です
+                  </div>
+                )}
+              </div>
+
+              {/* Suggestion */}
+              {reviewResult?.suggestion && (
+                <div className="text-sm bg-white border p-3 rounded-md mb-4 max-h-48 overflow-y-auto">
+                  <strong>Suggestion:</strong>
+                  <div className="mt-1 whitespace-pre-wrap">
+                    {reviewResult.suggestion}
+                  </div>
+                </div>
+              )}
+
+              {/* Save */}
+              <div className="flex justify-end">
+                <button
+                  onClick={handleAskSave}
+                  disabled={saving}
+                  className="
+                    bg-green-500 text-white px-4 py-2
+                    rounded-md hover:bg-green-600 transition
+                    disabled:opacity-60
+                  "
+                >
+                  学習日記に追加
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-60">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-4 border-yellow-500 mb-4" />
+              <p className="text-gray-600 font-medium">
+                AI が分析中...
+              </p>
+            </div>
+          )}
         </div>
-    );
+      </div>
+    </>
+  );
 };
 
 export default ReviewModal;
