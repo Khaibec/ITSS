@@ -51,9 +51,19 @@ const ReviewModal = ({ open, message, reviewResult, loading, onClose }) => {
 
                 {/* Content */}
                 {!loading && reviewResult ? (
-                    <div className="mt-4 flex flex-col flex-1 min-h-0">
+                    <div className="mt-4 flex flex-col flex-1 min-h-0 space-y-4">
 
-                        {/* Review Area - Pink Box (Center) */}
+                        {/* 1. TOP CARD: Reviewing Message (Fixed) */}
+                        <div className="shrink-0 bg-[#FFCDD2] rounded-3xl p-4 shadow-inner relative">
+                            <div className="bg-white/40 p-3 rounded-xl border border-white/50">
+                                <p className="text-xs text-red-800 font-bold mb-1 uppercase opacity-70">Reviewing Message</p>
+                                <p className="text-gray-900 font-medium text-lg leading-relaxed max-h-[80px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/50">
+                                    {message}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* 2. BOTTOM CARD: Results (Scrollable) */}
                         <div className="
                             flex-1 min-h-0
                             bg-[#FFCDD2] 
@@ -64,32 +74,23 @@ const ReviewModal = ({ open, message, reviewResult, loading, onClose }) => {
                             mb-16 relative
                             overflow-hidden
                         ">
-                            {/* 1. FIXED TOP SECTION: Reviewing Message */}
-                            <div className="shrink-0 p-6 pb-2 z-30 bg-[#FFCDD2]">
-                                <div className="bg-white/40 p-3 rounded-xl border border-white/50">
-                                    <p className="text-xs text-red-800 font-bold mb-1 uppercase opacity-70">Reviewing Message</p>
-                                    <p className="text-gray-900 font-medium text-lg leading-relaxed max-h-[80px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/50">
-                                        {message}
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* 2. SCROLLABLE CONTENT AREA */}
-                            <div className="flex-1 overflow-y-auto p-6 pt-2 pb-20 space-y-6">
+                            {/* SCROLLABLE CONTENT AREA */}
+                            <div className="flex-1 overflow-y-auto pb-20">
 
                                 {/* Section A: Analysis Result */}
                                 <div className="relative">
                                     <h3 className="
-                                        text-gray-800 font-bold text-lg mb-2 
+                                        text-gray-800 font-bold text-lg 
                                         sticky top-0 z-20 
-                                        bg-[#FFCDD2]/95 backdrop-blur-sm
-                                        pb-2 border-b-2 border-red-200/50
+                                        bg-[#FFCDD2]
+                                        pt-6 pb-2 px-6
+                                        border-b-2 border-red-200/50
                                         w-full
                                     ">
                                         Analysis Result
                                     </h3>
 
-                                    <div className="pt-2">
+                                    <div className="px-6 py-4">
                                         {hasWarning ? (
                                             <div className="text-red-900 font-semibold text-lg mb-3">
                                                 ⚠️ {reviewResult.warning}
@@ -104,19 +105,22 @@ const ReviewModal = ({ open, message, reviewResult, loading, onClose }) => {
 
                                 {/* Section B: Suggestion */}
                                 {reviewResult.suggestion && (
-                                    <div className="relative">
+                                    <div className="relative border-t-4 border-[#FFFDE7]">
                                         <h3 className="
-                                            text-gray-800 font-bold text-lg mb-2 
+                                            text-gray-800 font-bold text-lg 
                                             sticky top-0 z-20 
-                                            bg-[#FFCDD2]/95 backdrop-blur-sm
-                                            pb-2 border-b-2 border-red-200/50
+                                            bg-[#FFCDD2]
+                                            pt-6 pb-2 px-6
+                                            border-b-2 border-red-200/50
                                             w-full
                                         ">
                                             Suggestion
                                         </h3>
 
-                                        <div className="bg-white/60 p-4 rounded-xl w-full text-left shadow-sm mt-2">
-                                            <p className="text-gray-900 text-lg whitespace-pre-wrap leading-relaxed">{reviewResult.suggestion}</p>
+                                        <div className="px-6 py-4">
+                                            <div className="bg-white/60 p-4 rounded-xl w-full text-left shadow-sm">
+                                                <p className="text-gray-900 text-lg whitespace-pre-wrap leading-relaxed">{reviewResult.suggestion}</p>
+                                            </div>
                                         </div>
                                     </div>
                                 )}
