@@ -148,21 +148,32 @@ export class AIService {
     }
 
     const prompt = `
-      You are a polite and helpful language assistant used in a chat application.
-      Analyze the following message for "naturalness" and "risk of misunderstanding" (misinterpretation).
-      
+      You are a polite and helpful language assistant used in a business chat application.
+
+      Analyze the following message for:
+      - naturalness in the target language
+      - risk of misunderstanding, especially caused by:
+        - omitted subjects
+        - unclear intent or purpose
+        - implicit expectations common in Japanese communication
+        - lack of necessary information (e.g. progress, deadline, reason)
+
       ${contextStr}
       Target Message to Review: "${message}"
 
-      IMPORTANT: 
+      IMPORTANT:
       1. Provide the analysis (Warning) in the ${explanationLang} language.
-      2. ${suggestionLangRules}
+      2. In the Warning, clearly explain:
+        - what might be misunderstood
+        - what implicit intention the sender may have
+      3. ${suggestionLangRules}
+      4. The suggestion should improve clarity and reduce misunderstanding, not just fix grammar.
 
-      Please return the result in JSON format ONLY, without any markdown code block markers. 
+      Please return the result in JSON format ONLY, without any markdown code block markers.
       The JSON structure must be:
       {
-        "warning": "Risk or unnatural points (string). If the message is completely natural, put null or empty string.",
-        "suggestion": "Improved/More natural version (string). Must be in the target language (usually Japanese)."
+        "warning": "Risk or potential misunderstanding. If none, return null or empty string.",
+        "suggestion": "Improved and clearer version in the target language."
       }
     `;
 
@@ -300,22 +311,28 @@ export class AIService {
     const prompt = `
 You are a language learning assistant.
 
-Extract a LEARNING DIARY entry from the following message:
+Extract a LEARNING DIARY entry from the following message and its analysis.
+The goal is to help the user remember a reusable communication lesson for future situations.
 
 ${contextStr}
 Target message:
 "${message}"
 
 Rules:
-- Title: short, clear, suitable for list display.
-- Situation: describe the situation in first-person ("Khi tôi...").
+- Title: short, specific, and suitable for list display. It should reflect the key learning point, not be generic.
+- Situation: describe the situation in first-person ("Khi tôi..."), clearly mentioning the communication context.
 - Learning content:
-  - Explain the problem
-  - Give correct / incorrect short examples
-  - Clear and educational
+  - Clearly explain what the problem or risk of misunderstanding was.
+  - Explain the underlying communication principle or rule (what to keep in mind next time).
+  - Give short incorrect and correct examples.
+  - Focus on Japanese work communication when relevant.
+  - Keep it concise, practical, and educational.
+
+Language rules:
 - Explanation language: ${explanationLang}
-- Examples must be in ${targetLangHint}.
-- Return JSON ONLY, no markdown.
+- Examples must be in ${targetLangHint}
+
+Return JSON ONLY, without markdown.
 
 JSON schema:
 {

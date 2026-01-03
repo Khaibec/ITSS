@@ -135,30 +135,32 @@ export class ChatService {
       const finalPrompt = `
 User nationality: ${nationality}
 
-Below is the conversation context (15 previous messages):
+Below is the conversation context (up to 15 previous messages):
 ${contextText || '[No previous messages]'}
 
 The message that needs explanation:
 "${mainMessageText}"
 
 Task:
-Explain the message ABOVE in the user's native language and provide a short, learning-oriented breakdown. Keep all parts concise. Be sure to identify the true intent of the message. Sometime, the literal meaning may differ from the intended meaning. Like a flirt, joke, or express one's feelings.
+Explain the message ABOVE in the user's native language to help the user clearly understand it before replying.
+Focus especially on the speaker’s true intent, implicit expectations, and any potential ambiguity common in Japanese work communication.
+The literal meaning and intended meaning may differ.
 
 Your output MUST include:
 
-1. A short explanation of the main meaning of the sentence.
+1. A short explanation of the main intended meaning of the sentence, not just the literal meaning.
 
-2. Key language points used in the sentence, including vocabulary meaning and usage, grammar or structure, emotional nuance or politeness level, and any relevant cultural notes. Keep each point brief, written as normal sentences (no bullet marks).
+2. A brief learning-oriented breakdown, including important vocabulary or expressions, grammar or sentence structure, politeness level or emotional nuance, and any relevant cultural or communication context. Write in normal sentences, without bullet points.
 
-3. A few equivalent expressions that convey a similar meaning, written in short form.
+3. A few short equivalent expressions that convey a similar intent in a clearer or more explicit way.
 
-4. A few short example sentences showing how the expression can be used in other contexts.
+4. A few short example sentences showing how similar expressions are used in other work-related contexts.
 
 IMPORTANT:
 - Do NOT translate the entire conversation context; only use it to understand nuance.
 - The explanation MUST be written naturally in the user's native language (${nationality}).
-- Keep the explanation friendly, clear, and concise for language learners.
-- You must write the explanation in natural language, do not add bullet points or markdown or any special icons.
+- Keep everything concise, friendly, and easy to understand for language learners.
+- Do not use bullet points, markdown, or special symbols.
 
   `;
 
