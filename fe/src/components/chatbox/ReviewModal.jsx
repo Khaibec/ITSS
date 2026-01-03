@@ -69,9 +69,9 @@ const ReviewModal = ({
       )}
 
       {/* Overlay (GIỐNG ExplainModal) */}
-      <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center z-50">
+      <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center z-50 p-4 overflow-y-auto">
         {/* MAIN MODAL */}
-        <div className="relative bg-yellow-100 w-[600px] min-h-[280px] max-h-[70vh] rounded-lg shadow-lg p-6">
+        <div className="relative bg-yellow-100 w-full max-w-[600px] min-h-[280px] max-h-[85vh] overflow-y-auto rounded-lg shadow-lg p-6">
 
           {/* Block UI while saving */}
           {saving && (
@@ -104,7 +104,7 @@ const ReviewModal = ({
               {/* Original Message */}
               <div className="text-sm text-gray-700 border p-3 rounded-md bg-white mb-4">
                 <strong>原文:</strong>
-                <div className="mt-1 whitespace-pre-wrap">{message}</div>
+                <div className="mt-1 whitespace-pre-wrap break-words">{message}</div>
               </div>
 
               {/* Analysis Result */}
@@ -124,7 +124,7 @@ const ReviewModal = ({
               {reviewResult?.suggestion && (
                 <div className="text-sm bg-white border p-3 rounded-md mb-4 max-h-48 overflow-y-auto">
                   <strong>Suggestion:</strong>
-                  <div className="mt-1 whitespace-pre-wrap">
+                  <div className="mt-1 whitespace-pre-wrap break-words">
                     {reviewResult.suggestion}
                   </div>
                 </div>
