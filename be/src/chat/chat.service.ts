@@ -133,33 +133,40 @@ export class ChatService {
 
       // 5. Tạo prompt gửi sang AI
       const finalPrompt = `
-User nationality: ${nationality}
+      User nationality: ${nationality}
 
-Below is the conversation context (15 previous messages):
-${contextText || '[No previous messages]'}
+      Below is the conversation context (up to 15 previous messages):
+      ${contextText || '[No previous messages]'}
 
-The message that needs explanation:
-"${mainMessageText}"
+      The message that needs explanation:
+      "${mainMessageText}"
 
-Task:
-Explain the message ABOVE in the user's native language and provide a short, learning-oriented breakdown. Keep all parts concise. Be sure to identify the true intent of the message. Sometime, the literal meaning may differ from the intended meaning. Like a flirt, joke, or express one's feelings.
+      Task:
+      Explain the message ABOVE in the user's native language so the user can clearly understand the sender’s intention before replying.
 
-Your output MUST include:
+      Pay special attention to communication patterns that often cause misunderstanding in Japanese work messages, such as omitted subjects, unclear question scope, indirect expressions, or unstated expectations.
+      Clarify who is acting, what is being asked or implied, and what kind of response is expected, if these points are not explicitly stated.
+      Note that the literal meaning may differ from the intended or pragmatic meaning.
 
-1. A short explanation of the main meaning of the sentence.
+      Your output MUST include:
 
-2. Key language points used in the sentence, including vocabulary meaning and usage, grammar or structure, emotional nuance or politeness level, and any relevant cultural notes. Keep each point brief, written as normal sentences (no bullet marks).
+      A short explanation of the main intended meaning of the message, including the implicit purpose if it is not clearly stated.
 
-3. A few equivalent expressions that convey a similar meaning, written in short form.
+      A brief, learning-oriented breakdown explaining why the message may feel ambiguous or hard to understand. Cover relevant vocabulary or expressions, sentence structure (such as subject omission), politeness level or emotional nuance, and any cultural or communication context, written as normal sentences without bullet points.
 
-4. A few short example sentences showing how the expression can be used in other contexts.
+      A few short alternative expressions that convey the same intent in a clearer or more explicit way.
 
-IMPORTANT:
-- Do NOT translate the entire conversation context; only use it to understand nuance.
-- The explanation MUST be written naturally in the user's native language (${nationality}).
-- Keep the explanation friendly, clear, and concise for language learners.
-- You must write the explanation in natural language, do not add bullet points or markdown or any special icons.
+      A few short example sentences showing how similar intentions are expressed in other work-related situations.
 
+      IMPORTANT:
+
+      Do NOT translate the entire conversation context; only use it to understand nuance.
+
+      The explanation MUST be written naturally in the user's native language (${nationality}).
+
+      Keep everything concise, friendly, and easy to understand for language learners.
+
+      Do not use bullet points, markdown, or special symbols.
   `;
 
       // 6. Gửi sang Google Studio AI qua AIService
